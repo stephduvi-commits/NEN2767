@@ -1,0 +1,23 @@
+{
+  "name": "NEN 2767 AMAYFA",
+  "short_name": "AMAYFA",
+  "description": "Suivi du patrimoine immobilier - Camp Adjudant Brasseur",
+  "start_url": "/NEN2767/",
+  "display": "standalone",
+  "background_color": "#0f0f13",
+  "theme_color": "#f49634",
+  "orientation": "landscape",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIHJ4PSI4MCIgZmlsbD0iIzFhMWEyNCIvPgogIDwhLS0gR3JpbGxlIDJ4MiAtLT4KICA8cmVjdCB4PSI4MCIgeT0iODAiIHdpZHRoPSIxNDgiIGhlaWdodD0iMTQ4IiByeD0iMjIiIGZpbGw9IiNmNDk2MzQiLz4KICA8cmVjdCB4PSI4MCIgeT0iMjQ4IiB3aWR0aD0iMTQ4IiBoZWlnaHQ9IjE0OCIgcng9IjIyIiBmaWxsPSIjZjQ5NjM0IiBvcGFjaXR5PSIwLjU1Ii8+CiAgPHJlY3QgeD0iMjQ4IiB5PSI4MCIgd2lkdGg9IjE0OCIgaGVpZ2h0PSIxNDgiIHJ4PSIyMiIgZmlsbD0iI2Y0OTYzNCIgb3BhY2l0eT0iMC41NSIvPgogIDxyZWN0IHg9IjI0OCIgeT0iMjQ4IiB3aWR0aD0iMTQ4IiBoZWlnaHQ9IjE0OCIgcng9IjIyIiBmaWxsPSIjZjQ5NjM0IiBvcGFjaXR5PSIwLjI1Ii8+CiAgPCEtLSBOIGRhbnMgcHJlbWllciBjYXJyw6kgLS0+CiAgPHRleHQgeD0iMTU0IiB5PSIxODUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCBCbGFjaywgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMDAiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9IiMxYTFhMjQiPk48L3RleHQ+CiAgPCEtLSBCYXJyZSBvcmFuZ2UgYmFzIC0tPgogIDxyZWN0IHg9IjAiIHk9IjQ4NCIgd2lkdGg9IjUxMiIgaGVpZ2h0PSIyOCIgcng9IjE0IiBmaWxsPSIjZjQ5NjM0Ii8+Cjwvc3ZnPg==",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHJ4PSI1IiBmaWxsPSIjMWExYTI0Ii8+CiAgPHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjEyIiBoZWlnaHQ9IjEyIiByeD0iMiIgZmlsbD0iI2Y0OTYzNCIvPgogIDxyZWN0IHg9IjIiIHk9IjE3IiB3aWR0aD0iMTIiIGhlaWdodD0iMTIiIHJ4PSIyIiBmaWxsPSIjZjQ5NjM0IiBvcGFjaXR5PSIwLjU1Ii8+CiAgPHJlY3QgeD0iMTciIHk9IjIiIHdpZHRoPSIxMiIgaGVpZ2h0PSIxMiIgcng9IjIiIGZpbGw9IiNmNDk2MzQiIG9wYWNpdHk9IjAuNTUiLz4KICA8cmVjdCB4PSIxNyIgeT0iMTciIHdpZHRoPSIxMiIgaGVpZ2h0PSIxMiIgcng9IjIiIGZpbGw9IiNmNDk2MzQiIG9wYWNpdHk9IjAuMjUiLz4KICA8dGV4dCB4PSI4IiB5PSIxMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIEJsYWNrLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjkiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9IiMxYTFhMjQiPk48L3RleHQ+CiAgPHJlY3QgeD0iMCIgeT0iMjkiIHdpZHRoPSIzMiIgaGVpZ2h0PSIzIiByeD0iMS41IiBmaWxsPSIjZjQ5NjM0Ii8+Cjwvc3ZnPg==",
+      "sizes": "32x32",
+      "type": "image/svg+xml"
+    }
+  ]
+}
