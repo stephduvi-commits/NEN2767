@@ -63,6 +63,7 @@ tr.clickable:hover td{background:#1a1a28;}
 .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap;}
 .ok-badge{background:#1a2e1a;color:var(--green);}
 .nok-badge{background:#2e1a1a;color:var(--red);}
+.ouvert-badge{background:#1a1a2e;color:#6366f1;}
 .flag-action{background:#1a2e1a;color:var(--green);}
 .flag-noaction{background:var(--border);color:var(--muted);}
 .detail-panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:20px;overflow:hidden;}
@@ -738,9 +739,31 @@ function nenAvgBadge(val) {
 }
 function okBadge(v) {
   if(!v) return '<span class="badge pending-badge">—</span>';
-  if(v.toLowerCase()==='ok') return '<span class="badge ok-badge">✓ OK</span>';
-  if(v.toLowerCase()==='nok') return '<span class="badge nok-badge">✗ NOK</span>';
+  if(v.toLowerCase()==='ok') return '<span class="badge ok-badge">✓ Terminé</span>';
+  if(v.toLowerCase()==='nok') return '<span class="badge nok-badge">⏳ En cours</span>';
+  if(v.toLowerCase()==='ouvert') return '<span class="badge ouvert-badge">○ Ouvert</span>';
   return `<span class="badge">${v}</span>`;
+}
+function okLabel(v) {
+  if(!v) return '—';
+  const l = v.toLowerCase();
+  if(l==='ok') return 'Terminé';
+  if(l==='nok') return 'En cours';
+  if(l==='ouvert') return 'Ouvert';
+  return v;
+}
+function okColors(v, theme) {
+  const l = (v||'').toLowerCase();
+  if(theme==='dark') {
+    if(l==='ok')     return {bg:'#1a2e1a', fg:'var(--green)'};
+    if(l==='nok')    return {bg:'#2e1a1a', fg:'var(--red)'};
+    if(l==='ouvert') return {bg:'#1a1a2e', fg:'#6366f1'};
+    return {bg:'var(--border)', fg:'var(--muted)'};
+  }
+  if(l==='ok')     return {bg:'#dcfce7', fg:'#166534'};
+  if(l==='nok')    return {bg:'#fee2e2', fg:'#991b1b'};
+  if(l==='ouvert') return {bg:'#eff6ff', fg:'#1e40af'};
+  return {bg:'#f1f5f9', fg:'#64748b'};
 }
 function getObs(batId) { return DB.observations.filter(o=>o['ID_Batiment']===batId); }
 function getActions(obsId) { return DB.actions.filter(a=>a['ID_Observation']===obsId); }
@@ -1172,7 +1195,7 @@ function renderObservation(){
           <select id="f-etat2"><option value="">— Sélectionner —</option>${[1,2,3,4,5,6].map(i=>`<option value="${i}">${i} — ${nenLabel(i)}</option>`).join('')}</select>
         </div>
         <div class="form-group"><label>Statut</label>
-          <select id="f-oknok"><option value="">— Sélectionner —</option><option value="ok">✓ OK</option><option value="nok">✗ NOK</option></select>
+          <select id="f-oknok"><option value="">— Sélectionner —</option><option value="ok">✓ Terminé</option><option value="nok">⏳ En cours</option><option value="ouvert">○ Ouvert</option></select>
         </div>
         <div class="form-group full"><label>Remarques</label><textarea id="f-rem" placeholder="Remarques…"></textarea></div>
       </div>
@@ -1266,7 +1289,7 @@ function openActionDetail(actionId) {
       ${row('Work Order (WO)', a['WO']||'—')}
       ${row('Quantité réalisée', (a['Quantite_realisee']||'—') + (a['Unite'] ? ' ' + a['Unite'] : ''))}
       ${row('État estimé', a['Etat_estime'] ? `<span style="display:inline-block;padding:2px 9px;border-radius:5px;background:${nenColor(a['Etat_estime'])};color:${nenTxt(a['Etat_estime'])};font-weight:700;font-size:12px">${a['Etat_estime']}</span>` : '—')}
-      ${row('Statut', a['OK_NOK'] ? `<span style="padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:${a['OK_NOK'].toLowerCase()==='ok'?'#dcfce7':'#fee2e2'};color:${a['OK_NOK'].toLowerCase()==='ok'?'#166534':'#991b1b'}">${a['OK_NOK'].toUpperCase()}</span>` : '—')}
+      ${row('Statut', a['OK_NOK'] ? `<span style="padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:${okColors(a['OK_NOK'],'light').bg};color:${okColors(a['OK_NOK'],'light').fg}">${okLabel(a['OK_NOK'])}</span>` : '—')}
       ${row('Remarques', a['Remarques']||'—')}
       ${row('Encodé par', a['encoded_par']||'—')}
     </div>
@@ -1343,7 +1366,7 @@ function openEditModal(actionId){
         <select id="m-etat"><option value="">— Sélectionner —</option>${[1,2,3,4,5,6].map(i=>`<option value="${i}" ${a['Etat_estime']==i?'selected':''}>${i} — ${nenLabel(i)}</option>`).join('')}</select>
       </div>
       <div class="form-group"><label>Statut</label>
-        <select id="m-oknok"><option value="">—</option><option value="ok" ${a['OK_NOK']==='ok'?'selected':''}>✓ OK</option><option value="nok" ${a['OK_NOK']==='nok'?'selected':''}>✗ NOK</option></select>
+        <select id="m-oknok"><option value="">—</option><option value="ok" ${a['OK_NOK']==='ok'?'selected':''}>✓ Terminé</option><option value="nok" ${a['OK_NOK']==='nok'?'selected':''}>⏳ En cours</option><option value="ouvert" ${a['OK_NOK']==='ouvert'?'selected':''}>○ Ouvert</option></select>
       </div>
       <div class="form-group full"><label>Remarques</label><textarea id="m-rem">${a['Remarques']||''}</textarea></div>
       <div class="form-group full">
@@ -2161,8 +2184,8 @@ function generateBatPDF(batId) {
       ${[
         {v:obs.length,       l:'Observations', c:'#6366f1'},
         {v:allActs.length,   l:'Actions',      c:'#f49634'},
-        {v:actsOK.length,    l:'OK',           c:'#22c55e'},
-        {v:actsNOK.length,   l:'NOK',          c:'#ef4444'},
+        {v:actsOK.length,    l:'Terminé',       c:'#22c55e'},
+        {v:actsNOK.length,   l:'En cours',      c:'#ef4444'},
         {v:obsP1.length,     l:'Priorité 1',   c:'#ef4444'},
       ].map(k=>'<div style="padding:8px 12px;background:#f8f8f8;border-radius:6px;text-align:center;min-width:60px"><div style="font-size:20px;font-weight:800;color:'+k.c+'">'+k.v+'</div><div style="font-size:9px;color:#666;margin-top:2px">'+k.l+'</div></div>').join('')}
     </div>
@@ -2209,7 +2232,7 @@ function generateBatPDF(batId) {
                   '<span style="font-size:9px;font-weight:600;color:#f49634">' + (a['Date']||'—') + '</span>' +
                   (a['WO'] ? '<span style="font-size:9px;color:#666">WO: ' + a['WO'] + '</span>' : '') +
                   (a['encoded_par'] ? '<span style="font-size:9px;color:#666">· ' + a['encoded_par'] + '</span>' : '') +
-                  (a['OK_NOK'] ? '<span style="padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600;background:' + (a['OK_NOK'].toLowerCase()==='ok'?'#dcfce7':'#fee2e2') + ';color:' + (a['OK_NOK'].toLowerCase()==='ok'?'#166534':'#991b1b') + '">' + a['OK_NOK'] + '</span>' : '') +
+                  (a['OK_NOK'] ? '<span style="padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600;background:' + okColors(a['OK_NOK'],'light').bg + ';color:' + okColors(a['OK_NOK'],'light').fg + '">' + okLabel(a['OK_NOK']) + '</span>' : '') +
                 '</div>' +
                 '<div style="font-size:11px">' + (a['Description']||'—') + '</div>' +
                 (a['Remarques'] ? '<div style="font-size:10px;color:#888;margin-top:2px">' + a['Remarques'] + '</div>' : '') +
@@ -2395,7 +2418,7 @@ function generatePDF(selectedMonth, selectedYear) {
         <td style="padding:6px 8px;font-size:11px">${obs?obs['Élément']:'—'}</td>
         <td style="padding:6px 8px;font-size:11px;color:#666">${a['encoded_par']||'—'}</td>
         <td style="padding:6px 8px;text-align:center">
-          <span style="padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600;background:${a['OK_NOK']?.toLowerCase()==='ok'?'#dcfce7':'#fee2e2'};color:${a['OK_NOK']?.toLowerCase()==='ok'?'#166534':'#991b1b'}">${a['OK_NOK']||'—'}</span>
+          <span style="padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600;background:${okColors(a['OK_NOK'],'light').bg};color:${okColors(a['OK_NOK'],'light').fg}">${okLabel(a['OK_NOK'])||'—'}</span>
         </td>
       </tr>`;
     }).join('');
@@ -2462,8 +2485,8 @@ function generatePDF(selectedMonth, selectedYear) {
       <div style="display:flex;gap:12px;margin-bottom:8mm;flex-wrap:wrap">
         ${statBox('Actions encodées<br>'+moisNoms[moisCourant], actsCourant.length, compBadge(actsCourant.length, actsPrec.length, moisNoms[moisPrec]), '#f49634')}
         ${statBox('Bâtiments modifiés<br>'+moisNoms[moisCourant], batsCourant.length, compBadge(batsCourant.length, batsPrec.length, moisNoms[moisPrec]), '#6366f1')}
-        ${statBox('Actions OK<br>'+moisNoms[moisCourant], actsCourant.filter(a=>a['OK_NOK']?.toLowerCase()==='ok').length, `sur ${actsCourant.length} actions`, '#22c55e')}
-        ${statBox('Actions NOK<br>'+moisNoms[moisCourant], actsCourant.filter(a=>a['OK_NOK']?.toLowerCase()==='nok').length, `sur ${actsCourant.length} actions`, '#ef4444')}
+        ${statBox('Terminées<br>'+moisNoms[moisCourant], actsCourant.filter(a=>a['OK_NOK']?.toLowerCase()==='ok').length, `sur ${actsCourant.length} actions`, '#22c55e')}
+        ${statBox('En cours<br>'+moisNoms[moisCourant], actsCourant.filter(a=>a['OK_NOK']?.toLowerCase()==='nok').length, `sur ${actsCourant.length} actions`, '#ef4444')}
       </div>
 
       <!-- TABLEAU COMPARATIF MOIS -->
@@ -2490,13 +2513,13 @@ function generatePDF(selectedMonth, selectedYear) {
             <td style="padding:7px 12px;text-align:center">${compBadge(batsCourant.length, batsPrec.length, '')}</td>
           </tr>
           <tr style="background:#fff;border-bottom:1px solid #f0f0f0">
-            <td style="padding:7px 12px;font-weight:500">Actions OK</td>
+            <td style="padding:7px 12px;font-weight:500">Actions Terminées</td>
             <td style="padding:7px 12px;text-align:center">${actsPrec.filter(a=>a['OK_NOK']?.toLowerCase()==='ok').length}</td>
             <td style="padding:7px 12px;text-align:center;font-weight:700">${actsCourant.filter(a=>a['OK_NOK']?.toLowerCase()==='ok').length}</td>
             <td style="padding:7px 12px;text-align:center">${compBadge(actsCourant.filter(a=>a['OK_NOK']?.toLowerCase()==='ok').length, actsPrec.filter(a=>a['OK_NOK']?.toLowerCase()==='ok').length, '')}</td>
           </tr>
           <tr style="background:#fafafa">
-            <td style="padding:7px 12px;font-weight:500">Actions NOK</td>
+            <td style="padding:7px 12px;font-weight:500">Actions En cours</td>
             <td style="padding:7px 12px;text-align:center">${actsPrec.filter(a=>a['OK_NOK']?.toLowerCase()==='nok').length}</td>
             <td style="padding:7px 12px;text-align:center;font-weight:700">${actsCourant.filter(a=>a['OK_NOK']?.toLowerCase()==='nok').length}</td>
             <td style="padding:7px 12px;text-align:center">${compBadge(actsCourant.filter(a=>a['OK_NOK']?.toLowerCase()==='nok').length, actsPrec.filter(a=>a['OK_NOK']?.toLowerCase()==='nok').length, '')}</td>
@@ -2688,8 +2711,8 @@ async function generatePPTX() {
   const kpis=[
     {label:'Actions encodées',  valC:actsCourant.length,  valP:actsPrec.length,  color:ORANGE,   x:0.3},
     {label:'Bâtiments modifiés',valC:batIdsCourant.length,valP:batIdsPrev.length, color:'6366F1', x:2.78},
-    {label:'Actions OK',        valC:actsCourant.filter(a=>a['OK_NOK']?.toLowerCase()==='ok').length,  valP:actsPrec.filter(a=>a['OK_NOK']?.toLowerCase()==='ok').length,  color:'22C55E', x:5.26},
-    {label:'Actions NOK',       valC:actsCourant.filter(a=>a['OK_NOK']?.toLowerCase()==='nok').length, valP:actsPrec.filter(a=>a['OK_NOK']?.toLowerCase()==='nok').length, color:'EF4444', x:7.74},
+    {label:'Terminées',         valC:actsCourant.filter(a=>a['OK_NOK']?.toLowerCase()==='ok').length,  valP:actsPrec.filter(a=>a['OK_NOK']?.toLowerCase()==='ok').length,  color:'22C55E', x:5.26},
+    {label:'En cours',          valC:actsCourant.filter(a=>a['OK_NOK']?.toLowerCase()==='nok').length, valP:actsPrec.filter(a=>a['OK_NOK']?.toLowerCase()==='nok').length, color:'EF4444', x:7.74},
   ];
   kpis.forEach(k=>{
     const diff=k.valC-k.valP,arrow=diff>0?'▲':diff<0?'▼':'=',ac=diff<0?'22C55E':diff>0?'EF4444':GRAY;
@@ -2703,7 +2726,7 @@ async function generatePPTX() {
   s1.addText('Comparaison mensuelle',{x:0.4,y:2.1,w:5.5,h:0.26,fontSize:11,bold:true,color:'444444',fontFace:'Arial',margin:0});
   s1.addTable([
     [{text:'Indicateur',options:{bold:true,color:WHITE,fill:{color:ORANGE},fontSize:10}},{text:moisNoms[moisP]+' '+anneeP,options:{bold:true,color:WHITE,fill:{color:ORANGE},fontSize:10,align:'center'}},{text:moisNoms[moisC]+' '+anneeC,options:{bold:true,color:WHITE,fill:{color:ORANGE},fontSize:10,align:'center'}},{text:'Évolution',options:{bold:true,color:WHITE,fill:{color:ORANGE},fontSize:10,align:'center'}}],
-    ...([['Nouvelles actions',actsPrec.length,actsCourant.length],['Bâtiments concernés',batIdsPrev.length,batIdsCourant.length],['Actions OK',actsPrec.filter(a=>a['OK_NOK']?.toLowerCase()==='ok').length,actsCourant.filter(a=>a['OK_NOK']?.toLowerCase()==='ok').length],['Actions NOK',actsPrec.filter(a=>a['OK_NOK']?.toLowerCase()==='nok').length,actsCourant.filter(a=>a['OK_NOK']?.toLowerCase()==='nok').length]].map(([lbl,vP,vC],i)=>{
+    ...([['Nouvelles actions',actsPrec.length,actsCourant.length],['Bâtiments concernés',batIdsPrev.length,batIdsCourant.length],['Terminées',actsPrec.filter(a=>a['OK_NOK']?.toLowerCase()==='ok').length,actsCourant.filter(a=>a['OK_NOK']?.toLowerCase()==='ok').length],['En cours',actsPrec.filter(a=>a['OK_NOK']?.toLowerCase()==='nok').length,actsCourant.filter(a=>a['OK_NOK']?.toLowerCase()==='nok').length]].map(([lbl,vP,vC],i)=>{
       const d=vC-vP,evo=d>0?'▲ +'+d:d<0?'▼ '+d:'= 0',ec=d<0?'22C55E':d>0?'EF4444':GRAY,bg=i%2===0?'FFFFFF':'F5F5F5';
       return [{text:lbl,options:{fontSize:10,color:'333333',fill:{color:bg}}},{text:String(vP),options:{fontSize:10,color:GRAY,fill:{color:bg},align:'center'}},{text:String(vC),options:{fontSize:10,bold:true,color:'111111',fill:{color:bg},align:'center'}},{text:evo,options:{fontSize:10,bold:true,color:ec,fill:{color:bg},align:'center'}}];
     }))
@@ -2848,12 +2871,11 @@ function globalSearch(query) {
   const actRows = acts.slice(0,8).map(a => {
     const ob = DB.observations.find(o => o['ID_Observation'] === a['ID_Observation']);
     const bat = ob ? DB.batiments.find(b => b['ID_Batiment'] === ob['ID_Batiment']) : null;
-    const okBg = a['OK_NOK']?.toLowerCase()==='ok' ? '#1a2e1a' : a['OK_NOK']?.toLowerCase()==='nok' ? '#2e1a1a' : 'var(--border)';
-    const okFg = a['OK_NOK']?.toLowerCase()==='ok' ? 'var(--green)' : a['OK_NOK']?.toLowerCase()==='nok' ? 'var(--red)' : 'var(--muted)';
+    const _okC = okColors(a['OK_NOK'],'dark');
     return `<div onclick="closeSearchModal()"
       style="padding:10px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);transition:background .1s"
       onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
-      <div style="width:32px;height:32px;border-radius:8px;background:${okBg};color:${okFg};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${a['OK_NOK']||'—'}</div>
+      <div style="width:32px;height:32px;border-radius:8px;background:${_okC.bg};color:${_okC.fg};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0;text-align:center;line-height:1.1">${okLabel(a['OK_NOK'])||'—'}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${hi(a['Description'])||a['ID_Action']}</div>
         <div style="font-size:11px;color:var(--muted)">${bat ? bat['Nom'] : ''} · ${hi(a['encoded_par']||'')} · ${a['Date']||'—'}</div>
@@ -2934,8 +2956,7 @@ function generatePdfModif(month, year) {
     const bat = obs ? DB.batiments.find(b => b['ID_Batiment'] === obs['ID_Batiment']) : null;
     const batName = bat ? (bat['Nom']||bat['ID_Batiment']) : '—';
     const elemName = obs ? (obs['Élément']||'—') : '—';
-    const okBg = a['OK_NOK']?.toLowerCase()==='ok' ? '#dcfce7' : a['OK_NOK']?.toLowerCase()==='nok' ? '#fee2e2' : '#f1f5f9';
-    const okFg = a['OK_NOK']?.toLowerCase()==='ok' ? '#166534' : a['OK_NOK']?.toLowerCase()==='nok' ? '#991b1b' : '#64748b';
+    const {bg:okBg, fg:okFg} = okColors(a['OK_NOK'],'light');
 
     // Collecter photos (jusqu'à 3) avec leurs commentaires
     const photoSlots = [];
@@ -2966,7 +2987,7 @@ function generatePdfModif(month, year) {
       <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
         <div style="flex:1;min-width:200px">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <span style="padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:${okBg};color:${okFg}">${a['OK_NOK']||'—'}</span>
+            <span style="padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:${okBg};color:${okFg}">${okLabel(a['OK_NOK'])||'—'}</span>
             <span style="font-size:10px;color:#888">${a['ID_Action']} · ${a['Date']||'—'}</span>
           </div>
           <div style="font-size:12px;font-weight:700;color:#1a1a1a;margin-bottom:4px">${batName}</div>
@@ -3021,8 +3042,8 @@ function generatePdfModif(month, year) {
     <div style="display:flex;gap:12px;margin-bottom:6mm">
       ${[
         {v: acts.length,                                                          l:'Actions ce mois',  c:'#f49634'},
-        {v: acts.filter(a=>a['OK_NOK']?.toLowerCase()==='ok').length,            l:'OK',               c:'#22c55e'},
-        {v: acts.filter(a=>a['OK_NOK']?.toLowerCase()==='nok').length,           l:'NOK',              c:'#ef4444'},
+        {v: acts.filter(a=>a['OK_NOK']?.toLowerCase()==='ok').length,            l:'Terminé',          c:'#22c55e'},
+        {v: acts.filter(a=>a['OK_NOK']?.toLowerCase()==='nok').length,           l:'En cours',         c:'#ef4444'},
         {v: Object.keys(encStats).length,                                         l:'Encodeurs actifs', c:'#6366f1'},
         {v: [...new Set(acts.map(a=>{ const o=DB.observations.find(o=>o['ID_Observation']===a['ID_Observation']); return o?o['ID_Batiment']:null; }).filter(Boolean))].length, l:'Bâtiments touchés', c:'#0ea5e9'},
       ].map(k=>`<div style="flex:1;padding:10px 14px;background:#f8f8f8;border-radius:8px;text-align:center;border-top:3px solid ${k.c}">
