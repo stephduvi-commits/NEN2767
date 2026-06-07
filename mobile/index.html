@@ -277,6 +277,18 @@ select.form-input option{background:var(--surface);}
   <div id="fab-add" class="fab" onclick="goTo('add-action')" style="display:none">＋</div>
 </div>
 
+<!-- SCREEN: VIEW ACTION -->
+<div class="screen" id="screen-view-action">
+  <div class="header">
+    <span class="header-back" onclick="goTo('actions')">‹</span>
+    <div style="flex:1">
+      <div class="header-title">Détail action</div>
+      <div class="header-sub" id="view-action-id"></div>
+    </div>
+  </div>
+  <div class="content content-padded" id="view-action-content"></div>
+</div>
+
 <!-- SCREEN: EDIT ACTION -->
 <div class="screen" id="screen-edit-action">
   <div class="header">
@@ -782,6 +794,10 @@ function renderObservations() {
     const acts = getActions(o['ID_Observation']);
     const ep = calcEtatProjete(o);
     const arrow = ep < parseFloat(o['État']) ? '↓' : ep > parseFloat(o['État']) ? '↑' : '=';
+    const qTotal = parseFloat(o['Quantité']) || 0;
+    const qReal = acts.reduce((s, a) => s + (parseFloat(a['Quantite_realisee']) || 0), 0);
+    const pct = qTotal && qReal ? Math.round((qReal / qTotal) * 100) : null;
+    const pctCol = pct !== null ? (pct >= 100 ? 'var(--green)' : pct >= 50 ? 'var(--accent)' : 'var(--orange)') : null;
     return `<div class="card" onclick="selectObs('${o['ID_Observation']}')">
       <div class="nen-dot" style="background:${nenBg(o['État'])};color:${nenFg(o['État'])};width:36px;height:36px;font-size:13px">${o['État']}</div>
       <div class="card-content">
@@ -790,6 +806,7 @@ function renderObservations() {
         <div class="card-meta">
           <span class="badge" style="background:${nenBg(ep)}33;color:${nenBg(ep)}">${ep} ${arrow}</span>
           ${acts.length>0?`<span class="badge flag-action"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> ${acts.length}</span>`:'<span class="badge flag-noaction">0</span>'}
+          ${pct !== null ? `<span class="badge" style="background:${pctCol}22;color:${pctCol};gap:5px;display:inline-flex;align-items:center"><div style="width:28px;height:4px;background:${pctCol}33;border-radius:2px;overflow:hidden"><div style="height:100%;width:${Math.min(pct,100)}%;background:${pctCol};border-radius:2px"></div></div>${pct}%</span>` : ''}
         </div>
       </div>
       <span class="chevron">›</span>
@@ -839,6 +856,7 @@ function renderActions() {
               <div style="display:flex;gap:6px"><span style="font-size:11px;color:var(--muted);width:62px;flex-shrink:0">Date</span><span style="font-size:12px">${a['Date']||'—'}</span></div>
               <div style="display:flex;gap:6px"><span style="font-size:11px;color:var(--muted);width:62px;flex-shrink:0">WO</span><span style="font-size:12px">${a['WO']||'—'}</span></div>
               <div style="display:flex;gap:6px"><span style="font-size:11px;color:var(--muted);width:62px;flex-shrink:0">Quantité</span><span style="font-size:12px">${a['Quantite_realisee']||'—'} ${a['Unite']||''}</span></div>
+              ${(() => { const qObs=parseFloat(selectedObs['Quantité'])||0; const qReal=parseFloat(a['Quantite_realisee'])||0; if(!qObs||!qReal) return ''; const pct=Math.round((qReal/qObs)*100); const clamp=Math.min(pct,100); const col=pct>=100?'var(--green)':pct>=50?'var(--accent)':'var(--orange)'; return `<div style="display:flex;gap:6px;align-items:center"><span style="font-size:11px;color:var(--muted);width:62px;flex-shrink:0">% réalisé</span><div style="flex:1;display:flex;align-items:center;gap:5px"><div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="height:100%;width:${clamp}%;background:${col};border-radius:3px"></div></div><span style="font-size:11px;font-weight:700;color:${col}">${pct}%</span></div></div>`; })()}
               <div style="display:flex;gap:6px;align-items:center"><span style="font-size:11px;color:var(--muted);width:62px;flex-shrink:0">État est.</span>${a['Etat_estime']?`<span style="padding:1px 7px;border-radius:4px;background:${nenBg(a['Etat_estime'])};color:${nenFg(a['Etat_estime'])};font-weight:700;font-size:11px">${a['Etat_estime']}</span>`:'<span style="font-size:12px">—</span>'}</div>
               <div style="display:flex;gap:6px"><span style="font-size:11px;color:var(--muted);width:62px;flex-shrink:0">Encodé</span><span style="font-size:11px;color:var(--muted)">${a['encoded_par']||'—'}</span></div>
             </div>
@@ -854,7 +872,10 @@ function renderActions() {
             })()}
           </div>
           ${a['Remarques']?`<div style="font-size:12px;color:var(--muted);padding:8px 10px;background:var(--bg);border-radius:6px;border-left:3px solid var(--border2);margin-bottom:8px">${a['Remarques']}</div>`:''}
-          ${isContrib()?`<div style="padding-top:10px;border-top:1px solid var(--border)"><button onclick="openEditAction('${a['ID_Action']}')" style="width:100%;padding:9px;background:#2a1e0e;color:#f49634;border:1px solid #3a2a18;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:7px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Modifier</button></div>`:``}
+          <div style="padding-top:10px;border-top:1px solid var(--border);display:flex;gap:8px">
+            <button onclick="openViewAction('${a['ID_Action']}')" title="Visualiser" style="flex:1;padding:10px;background:#1a1e2e;color:#6366f1;border:1px solid #2a2e4e;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+            ${isContrib()?`<button onclick="openEditAction('${a['ID_Action']}')" title="Modifier" style="flex:1;padding:10px;background:#2a1e0e;color:#f49634;border:1px solid #3a2a18;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`:''}
+          </div>
         </div>`).join('')
     }
     <div style="height:80px"></div>
@@ -1216,6 +1237,42 @@ function openEditAction(actionId) {
 
   goTo('edit-action');
   setTimeout(() => initEditPhotos(a), 50);
+}
+
+function openViewAction(actionId) {
+  const a = DB.actions.find(x => x['ID_Action'] === actionId);
+  if (!a) return;
+  document.getElementById('view-action-id').textContent = actionId + ' · #' + (a['Num_Action'] || '');
+  const qObs = parseFloat(selectedObs ? selectedObs['Quantité'] : 0) || 0;
+  const qReal = parseFloat(a['Quantite_realisee']) || 0;
+  const pct = qObs && qReal ? Math.round((qReal / qObs) * 100) : null;
+  const pctCol = pct !== null ? (pct >= 100 ? 'var(--green)' : pct >= 50 ? 'var(--accent)' : 'var(--orange)') : 'var(--muted)';
+  const urls = [a['photo_url_1'] || a['photo_url'], a['photo_url_2'], a['photo_url_3']].filter(Boolean);
+  document.getElementById('view-action-content').innerHTML = `
+    <div class="info-card" style="margin-bottom:12px">
+      <div class="info-card-title">Détails</div>
+      <div class="info-row"><span class="info-label">Description</span><span class="info-value" style="font-size:13px">${a['Description'] || '—'}</span></div>
+      <div class="info-row"><span class="info-label">Date</span><span class="info-value">${a['Date'] || '—'}</span></div>
+      <div class="info-row"><span class="info-label">WO</span><span class="info-value">${a['WO'] || '—'}</span></div>
+      <div class="info-row"><span class="info-label">Quantité</span><span class="info-value">${a['Quantite_realisee'] || '—'} ${a['Unite'] || ''}</span></div>
+      ${pct !== null ? `<div class="info-row"><span class="info-label">% réalisé</span><span class="info-value"><div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden"><div style="height:100%;width:${Math.min(pct,100)}%;background:${pctCol};border-radius:3px"></div></div><span style="font-size:13px;font-weight:700;color:${pctCol}">${pct}%</span></div></span></div>` : ''}
+      <div class="info-row"><span class="info-label">État estimé</span><span class="info-value">${a['Etat_estime'] ? `<span style="padding:2px 8px;border-radius:4px;background:${nenBg(a['Etat_estime'])};color:${nenFg(a['Etat_estime'])};font-weight:700">${a['Etat_estime']}</span> ${nenLabel(a['Etat_estime'])}` : '—'}</span></div>
+      <div class="info-row"><span class="info-label">Statut</span><span class="info-value"><span class="badge ${a['OK_NOK']?.toLowerCase()==='ok'?'ok-badge':a['OK_NOK']?.toLowerCase()==='nok'?'nok-badge':''}">${a['OK_NOK'] || '—'}</span></span></div>
+      <div class="info-row"><span class="info-label">Encodé par</span><span class="info-value" style="color:var(--muted);font-size:12px">${a['encoded_par'] || '—'}</span></div>
+      ${a['Remarques'] ? `<div class="info-row"><span class="info-label">Remarques</span><span class="info-value" style="color:var(--muted);font-size:12px">${a['Remarques']}</span></div>` : ''}
+    </div>
+    ${urls.length ? `<div class="section-title">Photos <span class="count">${urls.length}</span></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      ${urls.map((url, pi) => `<div style="flex-shrink:0;position:relative">
+        <img src="${url}" style="width:100px;height:80px;object-fit:cover;border-radius:8px;cursor:pointer;display:block" onclick="openLightbox('${url}')" loading="lazy">
+        <div style="font-size:9px;color:var(--muted);text-align:center;margin-top:2px">Photo ${pi+1}</div>
+      </div>`).join('')}
+    </div>` : ''}
+    ${isContrib() ? `<button onclick="openEditAction('${actionId}')" class="btn btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Modifier</button>` : ''}
+    <button onclick="goTo('actions')" class="btn btn-ghost">Retour</button>
+    <div style="height:40px"></div>
+  `;
+  goTo('view-action');
 }
 
 async function saveEditAction() {
