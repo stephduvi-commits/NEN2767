@@ -860,9 +860,9 @@ function _renderCal() {
   if (!pop) { pop = document.createElement('div'); pop.id = 'cal-popup'; }
   pop.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <button onclick="_calNav(-1)" style="background:none;border:none;color:#e8e6f0;cursor:pointer;font-size:16px;padding:2px 8px">‹</button>
+      <button onclick="event.stopPropagation();_calNav(-1)" style="background:none;border:none;color:#e8e6f0;cursor:pointer;font-size:16px;padding:2px 8px">‹</button>
       <span style="font-size:13px;font-weight:600;color:#e8e6f0">${monthNames[_calMonth]} ${_calYear}</span>
-      <button onclick="_calNav(1)" style="background:none;border:none;color:#e8e6f0;cursor:pointer;font-size:16px;padding:2px 8px">›</button>
+      <button onclick="event.stopPropagation();_calNav(1)" style="background:none;border:none;color:#e8e6f0;cursor:pointer;font-size:16px;padding:2px 8px">›</button>
     </div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px">
       ${['L','M','M','J','V','S','D'].map(j=>`<div style="text-align:center;font-size:11px;color:#6b6b85;padding:2px">${j}</div>`).join('')}
