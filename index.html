@@ -27,6 +27,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .topbar-right{display:flex;align-items:center;gap:8px;}
 .logout-btn{padding:5px 12px;background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--muted);font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;}
 .logout-btn:hover{color:var(--text);}
+@keyframes spin{to{transform:rotate(360deg);}}
+.spin{animation:spin .8s linear infinite;display:inline-block;}
 .main{display:flex;flex:1;}
 .sidebar{width:280px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:calc(100vh - 56px);position:sticky;top:56px;overflow:hidden;}
 .sidebar-header{padding:16px;border-bottom:1px solid var(--border);}
@@ -263,6 +265,10 @@ select option{background:var(--surface);}
       <div class="topbar-right">
         <button id="btn-back" onclick="navBack()" style="display:none;padding:6px 10px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;align-items:center;gap:6px" title="Retour">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        </button>
+
+        <button id="btn-refresh" class="logout-btn" onclick="refreshData()" title="Actualiser les données" style="display:flex;align-items:center;justify-content:center;padding:5px 8px">
+          <svg id="refresh-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         </button>
 
         <button class="logout-btn" onclick="openSearchModal()" title="Recherche globale (Ctrl+K)" style="display:flex;align-items:center;gap:6px">
@@ -680,6 +686,7 @@ async function doLogout() {
     } catch(e) { console.warn('Logout error:', e); }
   }
   // Reset état local
+  if (_autoRefreshTimer) { clearInterval(_autoRefreshTimer); _autoRefreshTimer = null; }
   currentUser=null; supabaseSession=null; selectedBat=null; selectedObs=null;
   DB.batiments=[]; DB.observations=[]; DB.actions=[];
   const s=document.getElementById('admin-menu-section'); if(s) s.style.cssText='display:none';
@@ -723,6 +730,46 @@ async function loadData() {
   } catch(e) {
     console.error('loadData erreur:', e);
     document.getElementById('content').innerHTML=`<div style="margin:20px;padding:16px;background:#2e1a1a;border:1px solid #4a2a2a;border-radius:12px;color:var(--red)">⚠️ Erreur: ${e.message}</div>`;
+  }
+}
+
+let _autoRefreshTimer = null;
+
+async function refreshData() {
+  const btn = document.getElementById('btn-refresh');
+  const icon = document.getElementById('refresh-icon');
+  if (btn && btn.disabled) return;
+  if (btn) btn.disabled = true;
+  if (icon) icon.classList.add('spin');
+  try {
+    const [batiments, observations, actions] = await Promise.all([
+      supabaseFetch('batiment'),
+      supabaseFetch('observation','*',10000),
+      supabaseFetch('action','*',10000)
+    ]);
+    if (!Array.isArray(batiments) || !Array.isArray(observations) || !Array.isArray(actions)) throw new Error('Données invalides');
+    DB.batiments = batiments.map(b => ({'ID_Batiment':b.id_batiment,'Code objet':b.code_objet||'','État bâtiment':String(b.etat_batiment||''),'Nom':b.nom||'','Lieu':b.lieu||''}));
+    DB.observations = observations.map(o => ({'ID_Observation':o.id_observation,'ID_Batiment':o.id_batiment,'NL/SfB':o.nl_sfb||'','Élément':o.element||'','Procédure':o.procedure||'','Remarque':o.remarque||'','État':String(o.etat||''),'État projeté':String(o.etat_projete||''),'Priorité':String(o.priorite||''),'Quantité':String(o.quantite||''),'Unité':o.unite||''}));
+    DB.actions = actions.map(a => ({'ID_Action':a.id_action,'ID_Observation':a.id_observation,'Num_Action':String(a.num_action||''),'Description':a.description||'','Quantite_realisee':String(a.quantite_realisee||''),'Unite':a.unite||'','Etat_estime':String(a.etat_estime||''),'Date':a.date_action||'','OK_NOK':a.ok_nok||'','WO':a.wo||'','Remarques':a.remarques||'','encoded_par':a.encoded_par||'','photo_url':a.photo_url||'','photo_url_1':a.photo_url_1||a.photo_url||'','photo_url_2':a.photo_url_2||'','photo_url_3':a.photo_url_3||'','photo_comment_1':a.photo_comment_1||'','photo_comment_2':a.photo_comment_2||'','photo_comment_3':a.photo_comment_3||''}));
+    document.getElementById('total-bat').textContent = DB.batiments.length;
+    document.getElementById('total-obs').textContent = DB.observations.length;
+    document.getElementById('total-act').textContent = DB.actions.length;
+    renderSidebar();
+    if (currentMainView==='dashboard') renderDashboard();
+    else if (currentMainView==='plan') renderPlan();
+    else if (currentMainView==='batiments') {
+      const lastBat = localStorage.getItem('nen_last_bat');
+      if (lastBat) selectBat(lastBat);
+    }
+    else if (currentMainView==='users') renderUsers();
+    const now = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    if (btn) btn.title = 'Actualisé à ' + now + ' · Cliquer pour actualiser';
+  } catch(e) {
+    console.error('Refresh erreur:', e);
+    if (btn) btn.title = 'Erreur lors de l\'actualisation';
+  } finally {
+    if (icon) icon.classList.remove('spin');
+    if (btn) btn.disabled = false;
   }
 }
 
@@ -978,6 +1025,8 @@ function initApp() {
   document.getElementById('total-obs').textContent=DB.observations.length;
   document.getElementById('total-act').textContent=DB.actions.length;
   renderSidebar();
+  if (_autoRefreshTimer) clearInterval(_autoRefreshTimer);
+  _autoRefreshTimer = setInterval(refreshData, 10 * 60 * 1000);
   // Restaurer la dernière vue visitée
   const lastView = localStorage.getItem('nen_last_view') || 'plan';
   showView(lastView);
