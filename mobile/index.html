@@ -323,7 +323,7 @@ select.form-input option{background:var(--surface);}
         </button>
       </div>
       <input type="file" id="edit-photo-camera" accept="image/*" capture="environment" style="display:none">
-      <input type="file" id="edit-photo-gallery" accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif" style="display:none">
+      <input type="file" id="edit-photo-gallery" accept="image/*" style="display:none">
     </div>
 
     <div class="form-group">
@@ -412,7 +412,7 @@ select.form-input option{background:var(--surface);}
         </button>
       </div>
       <input type="file" id="add-photo-camera" accept="image/*" capture="environment" style="display:none">
-      <input type="file" id="add-photo-gallery" accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif" style="display:none">
+      <input type="file" id="add-photo-gallery" accept="image/*" style="display:none">
     </div>
 
     <div class="form-group">
@@ -1089,10 +1089,12 @@ function showPhotoSourcePicker(mode, index) {
 
 function pickPhotoSource(mode, index, source) {
   document.getElementById('photo-picker-overlay')?.remove();
+  if (source === 'camera') {
+    openInAppCamera(mode, index);
+    return;
+  }
   currentPhotoSlot = { mode, index };
-  const inputId = source === 'camera'
-    ? (mode === 'add' ? 'add-photo-camera' : 'edit-photo-camera')
-    : (mode === 'add' ? 'add-photo-gallery' : 'edit-photo-gallery');
+  const inputId = mode === 'add' ? 'add-photo-gallery' : 'edit-photo-gallery';
   const input = document.getElementById(inputId);
   input.onchange = function() {
     const file = input.files[0];
@@ -1102,6 +1104,86 @@ function pickPhotoSource(mode, index, source) {
     processPhoto(file, currentPhotoSlot.mode, currentPhotoSlot.index, info);
   };
   input.click();
+}
+
+let _cameraStream = null;
+let _cameraPending = null;
+
+async function openInAppCamera(mode, index) {
+  _cameraPending = { mode, index };
+
+  const overlay = document.createElement('div');
+  overlay.id = 'camera-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:#000;z-index:700;display:flex;flex-direction:column;';
+  overlay.innerHTML = `
+    <video id="cam-video" autoplay playsinline muted style="flex:1;object-fit:cover;width:100%;min-height:0;"></video>
+    <div style="background:#111;padding:16px 20px 32px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+      <button onclick="closeCameraOverlay(true)" style="width:52px;height:52px;background:#2a2a3a;border:none;border-radius:50%;color:#e8e6f0;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+      <button onclick="captureFromCamera()" style="width:72px;height:72px;background:transparent;border:4px solid #fff;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;">
+        <div style="width:58px;height:58px;background:#f49634;border-radius:50%;"></div>
+      </button>
+      <div style="width:52px;"></div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  try {
+    _cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+      audio: false
+    });
+    const video = document.getElementById('cam-video');
+    if (video) video.srcObject = _cameraStream;
+  } catch(e) {
+    // Fallback to native file input when getUserMedia is unavailable/denied
+    overlay.remove();
+    _cameraPending = null;
+    currentPhotoSlot = { mode, index };
+    const inputId = mode === 'add' ? 'add-photo-camera' : 'edit-photo-camera';
+    const input = document.getElementById(inputId);
+    input.onchange = function() {
+      const file = input.files[0];
+      if (!file) return;
+      input.value = '';
+      processPhoto(file, mode, index, getWatermarkInfo(mode));
+    };
+    input.click();
+  }
+}
+
+function captureFromCamera() {
+  const video = document.getElementById('cam-video');
+  if (!video || !_cameraPending) return;
+  const { mode, index } = _cameraPending;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth || 1280;
+  canvas.height = video.videoHeight || 720;
+  canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  closeCameraOverlay(false);
+
+  canvas.toBlob(blob => {
+    if (!blob) return;
+    const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
+    processPhoto(file, mode, index, getWatermarkInfo(mode));
+  }, 'image/jpeg', 0.92);
+}
+
+function closeCameraOverlay(cancelled) {
+  if (_cameraStream) {
+    _cameraStream.getTracks().forEach(t => t.stop());
+    _cameraStream = null;
+  }
+  document.getElementById('camera-overlay')?.remove();
+  if (cancelled && _cameraPending) {
+    const { mode, index } = _cameraPending;
+    const slot = photos[mode]?.[index];
+    if (slot && !slot.blob && !slot.existingUrl) {
+      photos[mode].splice(index, 1);
+      renderPhotoSlots(mode);
+    }
+  }
+  _cameraPending = null;
 }
 
 function renderPhotoSlots(mode) {
