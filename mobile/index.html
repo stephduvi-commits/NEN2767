@@ -228,6 +228,9 @@ select.form-input option{background:var(--surface);}
     <div onclick="openAppInfo()" style="cursor:pointer;padding:6px;margin-left:6px;display:flex;align-items:center;justify-content:center;color:var(--muted)">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
     </div>
+    <div id="btn-refresh" onclick="refreshData()" style="cursor:pointer;padding:6px;margin-left:6px;display:flex;align-items:center;justify-content:center;color:var(--muted)">
+      <svg id="refresh-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+    </div>
   </div>
   <div class="search-wrap">
     <input type="search" class="search-input" id="search-bat" placeholder="Rechercher un bâtiment…" oninput="filterBatiments()">
@@ -311,9 +314,14 @@ select.form-input option{background:var(--surface);}
     <div class="form-group">
       <label>Photos <span style="font-size:11px;color:var(--muted)">(3 max)</span></label>
       <div id="edit-photos-container"></div>
-      <button class="btn-photo" id="btn-edit-add-photo" onclick="addPhotoSlot('edit')" style="display:flex">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Ajouter / Remplacer une photo
-      </button>
+      <div id="btn-edit-add-photo" style="display:flex;gap:8px;margin-bottom:14px">
+        <button onclick="addPhotoSlot('edit','camera')" style="flex:1;padding:14px;background:#1a1e2e;color:#6366f1;border:1px dashed #6366f1;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Photo
+        </button>
+        <button onclick="addPhotoSlot('edit','gallery')" style="flex:1;padding:14px;background:var(--bg);color:var(--text);border:1px solid var(--border2);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Galerie
+        </button>
+      </div>
       <input type="file" id="edit-photo-camera" accept="image/*" capture="environment" style="display:none">
       <input type="file" id="edit-photo-gallery" accept="image/*" style="display:none">
     </div>
@@ -395,9 +403,14 @@ select.form-input option{background:var(--surface);}
     <div class="form-group">
       <label>Photos <span style="font-size:11px;color:var(--muted)">(3 max)</span></label>
       <div id="add-photos-container"></div>
-      <button class="btn-photo" id="btn-add-photo" onclick="addPhotoSlot('add')" style="display:flex">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Ajouter une photo
-      </button>
+      <div id="btn-add-photo" style="display:flex;gap:8px;margin-bottom:14px">
+        <button onclick="addPhotoSlot('add','camera')" style="flex:1;padding:14px;background:#1a1e2e;color:#6366f1;border:1px dashed #6366f1;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Photo
+        </button>
+        <button onclick="addPhotoSlot('add','gallery')" style="flex:1;padding:14px;background:var(--bg);color:var(--text);border:1px solid var(--border2);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Galerie
+        </button>
+      </div>
       <input type="file" id="add-photo-camera" accept="image/*" capture="environment" style="display:none">
       <input type="file" id="add-photo-gallery" accept="image/*" style="display:none">
     </div>
@@ -600,6 +613,8 @@ async function doLogin() {
     err.style.display='none';
     document.getElementById('header-user').textContent = currentUser.name + ' · ' + (currentUser.role === 'admin' ? '' : currentUser.role === 'contributeur' ? '' : '👁');
     await loadData();
+    if (_autoRefreshTimer) clearInterval(_autoRefreshTimer);
+    _autoRefreshTimer = setInterval(refreshData, 10 * 60 * 1000);
     goTo('batiments');
   } catch(e) {
     err.style.display='block'; err.textContent='❌ ' + (e.message || 'Erreur de connexion.');
@@ -609,6 +624,7 @@ async function doLogin() {
 
 async function doLogout() {
   if (!confirm('Se déconnecter ?')) return;
+  if (_autoRefreshTimer) { clearInterval(_autoRefreshTimer); _autoRefreshTimer = null; }
   if (supabaseSession) {
     await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
       method: 'POST',
@@ -665,6 +681,29 @@ async function loadData() {
     const el = document.getElementById('list-batiments');
     if (el) el.innerHTML = `<div class="loading"><span style="color:var(--red)">⚠️ Erreur chargement : ${e.message}</span></div>`;
     throw e;
+  }
+}
+
+let _autoRefreshTimer = null;
+
+async function refreshData() {
+  const btn = document.getElementById('btn-refresh');
+  const icon = document.getElementById('refresh-icon');
+  if (btn && btn._refreshing) return;
+  if (btn) btn._refreshing = true;
+  if (icon) icon.style.animation = 'spin .8s linear infinite';
+  try {
+    await loadData();
+    const active = document.querySelector('.screen.active');
+    const id = active ? active.id : '';
+    if (id === 'screen-batiments') renderBatiments();
+    else if (id === 'screen-observations') renderObservations();
+    else if (id === 'screen-actions') renderActions();
+  } catch(e) {
+    console.error('Refresh erreur:', e);
+  } finally {
+    if (icon) icon.style.animation = '';
+    if (btn) btn._refreshing = false;
   }
 }
 
@@ -1014,12 +1053,15 @@ function refreshWatermark(mode, index) {
   img.src = src;
 }
 
-function addPhotoSlot(mode) {
+function addPhotoSlot(mode, source) {
   if (photos[mode].length >= 3) return;
   const index = photos[mode].length;
   photos[mode].push({ blob: null, comment: '', existingUrl: null });
-  // Popup choix source
-  showPhotoSourcePicker(mode, index);
+  if (source) {
+    pickPhotoSource(mode, index, source);
+  } else {
+    showPhotoSourcePicker(mode, index);
+  }
 }
 
 function showPhotoSourcePicker(mode, index) {
@@ -1075,9 +1117,10 @@ function renderPhotoSlots(mode) {
     <div id="photo-slot-${mode}-${i}" style="background:var(--bg);border:1px solid var(--border2);border-radius:12px;padding:12px;margin-bottom:10px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <span style="font-size:12px;font-weight:600;color:var(--muted)">Photo ${i+1}</span>
-        <div style="display:flex;gap:8px">
-          <button onclick="showPhotoSourcePicker('${mode}',${i})" style="padding:4px 10px;background:var(--surface);border:1px solid var(--border2);border-radius:6px;color:var(--muted);font-size:12px;cursor:pointer;font-family:'Inter',sans-serif"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-6"/></svg> Changer</button>
-          <button onclick="removePhotoSlot('${mode}',${i})" style="padding:4px 10px;background:#2e1a1a;border:1px solid #4a2a2a;border-radius:6px;color:var(--red);font-size:12px;cursor:pointer;font-family:'Inter',sans-serif"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+        <div style="display:flex;gap:6px">
+          <button onclick="pickPhotoSource('${mode}',${i},'camera')" style="padding:4px 10px;background:var(--surface);border:1px solid var(--border2);border-radius:6px;color:var(--muted);font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Photo</button>
+          <button onclick="pickPhotoSource('${mode}',${i},'gallery')" style="padding:4px 10px;background:var(--surface);border:1px solid var(--border2);border-radius:6px;color:var(--muted);font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Galerie</button>
+          <button onclick="removePhotoSlot('${mode}',${i})" style="padding:4px 10px;background:#2e1a1a;border:1px solid #4a2a2a;border-radius:6px;color:var(--red);font-size:12px;cursor:pointer;font-family:'Inter',sans-serif"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
         </div>
       </div>
       ${src ? `<img id="photo-preview-${mode}-${i}" src="${src}" style="width:100%;border-radius:8px;max-height:180px;object-fit:cover;margin-bottom:8px" onclick="openLightbox('${src}')">` : `<div style="height:80px;background:var(--surface);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;margin-bottom:8px">⏳ En attente</div>`}
