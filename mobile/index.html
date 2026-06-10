@@ -565,6 +565,14 @@ async function sbInsert(table, data) {
   return res.ok;
 }
 
+async function sbDelete(table, id_col, id_val) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${id_col}=eq.${encodeURIComponent(id_val)}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  });
+  return res.ok;
+}
+
 // Supprime les anciennes photos du bucket après save (fire-and-forget)
 function deleteStoragePhotos(urls) {
   const prefix = `${SUPABASE_URL}/storage/v1/object/public/action-photos/`;
@@ -1352,6 +1360,45 @@ async function saveAction() {
   }
 }
 
+// ===== DELETE ACTION =====
+function deleteAction(actionId) {
+  const a = DB.actions.find(x => x['ID_Action'] === actionId);
+  if (!a) return;
+  const elem = selectedObs ? (selectedObs['Élément'] || selectedObs['ID_Observation']) : '';
+  const desc = a['Description'] ? a['Description'].substring(0, 60) + (a['Description'].length > 60 ? '…' : '') : actionId;
+  const overlay = document.createElement('div');
+  overlay.id = 'delete-action-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;display:flex;align-items:flex-end;justify-content:center';
+  overlay.innerHTML = `
+    <div style="background:var(--surface);border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:480px">
+      <div style="width:40px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 20px"></div>
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="width:52px;height:52px;border-radius:50%;background:#2e1a1a;border:2px solid #7f1d1d;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </div>
+        <div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:4px">Supprimer cette action ?</div>
+        ${elem ? `<div style="font-size:13px;color:var(--accent);font-weight:600;margin-bottom:4px">${elem}</div>` : ''}
+        <div style="font-size:13px;color:var(--muted);margin-bottom:12px">${desc}</div>
+        <div style="display:inline-flex;align-items:center;gap:6px;background:#2e1a1a;border:1px solid #7f1d1d;border-radius:8px;padding:8px 14px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span style="font-size:12px;color:#ef4444;font-weight:600">Cette action est irréversible.</span>
+        </div>
+      </div>
+      <button onclick="confirmDeleteAction('${actionId}')" style="width:100%;padding:14px;background:#7f1d1d;border:1px solid #991b1b;border-radius:10px;color:#fca5a5;font-size:15px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:10px">Supprimer définitivement</button>
+      <button onclick="document.getElementById('delete-action-overlay').remove()" style="width:100%;padding:12px;background:transparent;color:var(--muted);border:none;font-size:14px;cursor:pointer;font-family:'Inter',sans-serif">Annuler</button>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function confirmDeleteAction(actionId) {
+  document.getElementById('delete-action-overlay')?.remove();
+  const idx = DB.actions.findIndex(a => a['ID_Action'] === actionId);
+  if (idx === -1) return;
+  const ok = await sbDelete('action', 'id_action', actionId);
+  if (ok) { DB.actions.splice(idx, 1); goTo('actions'); }
+  else { alert('Erreur lors de la suppression.'); }
+}
+
 // ===== EDIT ACTION =====
 let currentEditActionId = null;
 
@@ -1406,7 +1453,10 @@ function openViewAction(actionId) {
         <div style="font-size:9px;color:var(--muted);text-align:center;margin-top:2px">Photo ${pi+1}</div>
       </div>`).join('')}
     </div>` : ''}
-    ${isContrib() ? `<button onclick="openEditAction('${actionId}')" class="btn btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Modifier</button>` : ''}
+    ${isContrib() ? `<div style="display:flex;gap:8px;margin-bottom:8px">
+      <button onclick="openEditAction('${actionId}')" class="btn btn-primary" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Modifier</button>
+      <button onclick="deleteAction('${actionId}')" style="padding:12px 16px;background:#2e1a1a;border:1px solid #7f1d1d;border-radius:10px;color:#ef4444;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+    </div>` : ''}
     <button onclick="goTo('actions')" class="btn btn-ghost">Retour</button>
     <div style="height:40px"></div>
   `;
