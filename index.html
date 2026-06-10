@@ -3182,26 +3182,74 @@ function generatePdfModif(month, year) {
 
 function exportFullXLS(){
   const nenLabels={1:'Excellent',2:'Bon',3:'Acceptable',4:'Médiocre',5:'Mauvais',6:'Critique'};
-  const rows=[['ID Bâtiment','Nom Bâtiment','Lieu','Code Objet','État Bâtiment','ID Observation','Élément','NL/SfB','Procédure','Remarque','État actuel','État label','État projeté','Priorité','Quantité','Unité','ID Action','N° Action','Description','Date','WO','Quantité réalisée','Unité action','État estimé','OK/NOK','Remarques','Encodé par']];
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('fr-BE').replace(/\//g,'-');
+  const heureStr = now.toLocaleTimeString('fr-BE',{hour:'2-digit',minute:'2-digit'});
+
+  // ===== ONGLET 1 : RÉSUMÉ =====
+  const resume=[
+    ['NEN2767 AMAYFA — Export complet'],
+    [`Généré le : ${dateStr} à ${heureStr}`],
+    [],
+    ['Table','Nombre de lignes'],
+    ['Bâtiments', DB.batiments.length],
+    ['Observations', DB.observations.length],
+    ['Actions', DB.actions.length],
+    ['Utilisateurs', DB.profiles ? DB.profiles.length : '—'],
+  ];
+
+  // ===== ONGLET 2 : BÂTIMENTS =====
+  const batRows=[['ID Bâtiment','Nom','Lieu','Code Objet','État Bâtiment']];
+  DB.batiments.forEach(b=>{
+    batRows.push([b['ID_Batiment'],b['Nom'],b['Lieu'],b['Code objet'],b['État bâtiment']]);
+  });
+
+  // ===== ONGLET 3 : OBSERVATIONS =====
+  const obsRows=[['ID Observation','ID Bâtiment','Élément','NL/SfB','Procédure','Remarque','État actuel','État label','État projeté','Priorité','Quantité','Unité']];
+  DB.observations.forEach(o=>{
+    const ep=calcEtatProjete(o);
+    obsRows.push([o['ID_Observation'],o['ID_Batiment'],o['Élément'],o['NL/SfB'],o['Procédure'],o['Remarque'],o['État'],nenLabels[parseInt(o['État'])]||'',ep,o['Priorité'],o['Quantité'],o['Unité']]);
+  });
+
+  // ===== ONGLET 4 : ACTIONS =====
+  const actRows=[['ID Action','N° Action','ID Observation','Description','Date','WO','Quantité réalisée','Unité','État estimé','OK/NOK','Remarques','Encodé par']];
+  DB.actions.forEach(a=>{
+    actRows.push([a['ID_Action'],a['Num_Action'],a['ID_Observation'],a['Description'],a['Date'],a['WO'],a['Quantite_realisee'],a['Unite'],a['Etat_estime'],a['OK_NOK'],a['Remarques'],a['encoded_par']||'']);
+  });
+
+  // ===== ONGLET 5 : VUE COMPLÈTE (ancien format) =====
+  const fullRows=[['ID Bâtiment','Nom Bâtiment','Lieu','Code Objet','État Bâtiment','ID Observation','Élément','NL/SfB','Procédure','Remarque','État actuel','État label','État projeté','Priorité','Quantité','Unité','ID Action','N° Action','Description','Date','WO','Quantité réalisée','Unité action','État estimé','OK/NOK','Remarques','Encodé par']];
   DB.batiments.forEach(b=>{
     const obs=getObs(b['ID_Batiment']);
-    if(!obs.length){rows.push([b['ID_Batiment'],b['Nom'],b['Lieu'],b['Code objet'],b['État bâtiment'],'','','','','','','','','','','','','','','','','','','','','','']);return;}
+    if(!obs.length){fullRows.push([b['ID_Batiment'],b['Nom'],b['Lieu'],b['Code objet'],b['État bâtiment'],'','','','','','','','','','','','','','','','','','','','','','']);return;}
     obs.forEach(o=>{
       const acts=getActions(o['ID_Observation']); const ep=calcEtatProjete(o);
       const baseObs=[b['ID_Batiment'],b['Nom'],b['Lieu'],b['Code objet'],b['État bâtiment'],o['ID_Observation'],o['Élément'],o['NL/SfB'],o['Procédure'],o['Remarque'],o['État'],nenLabels[parseInt(o['État'])]||'',ep,o['Priorité'],o['Quantité'],o['Unité']];
-      if(!acts.length){rows.push([...baseObs,'','','','','','','','','','','']);return;}
+      if(!acts.length){fullRows.push([...baseObs,'','','','','','','','','','','']);return;}
       acts.forEach((a,i)=>{
         const bd=i===0?baseObs:Array(baseObs.length).fill('');
-        rows.push([...bd,a['ID_Action'],a['Num_Action'],a['Description'],a['Date'],a['WO'],a['Quantite_realisee'],a['Unite'],a['Etat_estime'],a['OK_NOK'],a['Remarques'],a['encoded_par']||'']);
+        fullRows.push([...bd,a['ID_Action'],a['Num_Action'],a['Description'],a['Date'],a['WO'],a['Quantite_realisee'],a['Unite'],a['Etat_estime'],a['OK_NOK'],a['Remarques'],a['encoded_par']||'']);
       });
     });
   });
-  const csv=rows.map(r=>r.map(c=>'"'+String(c??'').replace(/"/g,'""')+'"').join(';')).join('\n');
-  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a'); a.href=url;
-  a.download='NEN2767_AMAYFA_'+new Date().toLocaleDateString('fr-BE').replace(/\//g,'-')+'.csv';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+
+  // ===== GÉNÉRATION XLSX =====
+  const wb = XLSX.utils.book_new();
+
+  const wsResume  = XLSX.utils.aoa_to_sheet(resume);
+  const wsBat     = XLSX.utils.aoa_to_sheet(batRows);
+  const wsObs     = XLSX.utils.aoa_to_sheet(obsRows);
+  const wsAct     = XLSX.utils.aoa_to_sheet(actRows);
+  const wsFull    = XLSX.utils.aoa_to_sheet(fullRows);
+
+  XLSX.utils.book_append_sheet(wb, wsResume, 'Résumé');
+  XLSX.utils.book_append_sheet(wb, wsBat,    'Bâtiments');
+  XLSX.utils.book_append_sheet(wb, wsObs,    'Observations');
+  XLSX.utils.book_append_sheet(wb, wsAct,    'Actions');
+  XLSX.utils.book_append_sheet(wb, wsFull,   'Vue complète');
+
+  const filename = `NEN2767_AMAYFA_${dateStr}.xlsx`;
+  XLSX.writeFile(wb, filename);
 }
 </script>
 </body>
