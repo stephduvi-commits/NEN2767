@@ -2105,18 +2105,37 @@ async function renderUsers(){
   };
   window.deleteUser=async function(id,nom){
     if(currentUser&&currentUser.id===id){alert("Impossible de supprimer votre propre compte.");return;}
-    if(!confirm(`⚠️ Supprimer définitivement l'utilisateur :\n\n"${nom}"\n\nCette action est irréversible.`)) return;
-    try {
-      // Supprimer le profil (le compte Auth reste dans Supabase)
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${id}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders()
-      });
-      if (!res.ok) throw new Error('Erreur HTTP ' + res.status);
-      // Tenter aussi de supprimer via Edge Function
-      try { await callEdgeFunction('delete', { userId: id }); } catch(e2) {}
-      renderUsers();
-    } catch(e) { alert('❌ '+e.message); }
+    // Modal stylisé identique à deleteAction
+    document.getElementById('modal-content').innerHTML = `
+      <div style="text-align:center;padding:8px 0 4px">
+        <div style="width:56px;height:56px;border-radius:50%;background:#2e1a1a;border:2px solid #7f1d1d;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:8px">Supprimer cet utilisateur ?</div>
+        <div style="font-size:14px;color:var(--accent);font-weight:600;margin-bottom:12px">${nom}</div>
+        <div style="display:inline-flex;align-items:center;gap:6px;background:#2e1a1a;border:1px solid #7f1d1d;border-radius:8px;padding:8px 14px;margin:8px 0">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span style="font-size:12px;color:#ef4444;font-weight:600">Cette action est irréversible.</span>
+        </div>
+      </div>
+      <div class="modal-actions" style="margin-top:16px">
+        <button class="btn btn-ghost" onclick="closeModal()">Annuler</button>
+        <button class="btn btn-sm" onclick="confirmDeleteUser('${id}')" style="background:#7f1d1d;border:1px solid #991b1b;color:#fca5a5;font-weight:600;padding:9px 18px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px">Supprimer définitivement</button>
+      </div>`;
+    document.getElementById('modal-overlay').style.display = 'flex';
+    // Stocker la fonction de confirmation
+    window.confirmDeleteUser = async function(userId){
+      closeModal();
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
+          method: 'DELETE',
+          headers: getAuthHeaders()
+        });
+        if (!res.ok) throw new Error('Erreur HTTP ' + res.status);
+        try { await callEdgeFunction('delete', { userId }); } catch(e2) {}
+        renderUsers();
+      } catch(e) { alert('❌ '+e.message); }
+    };
   };
   renderTable();
 
