@@ -2105,7 +2105,7 @@ async function renderUsers(){
   };
   window.deleteUser=async function(id,nom){
     if(currentUser&&currentUser.id===id){alert("Impossible de supprimer votre propre compte.");return;}
-    if(!confirm('Supprimer définitivement "'+nom+'" ? Cette action est irréversible.')) return;
+    if(!confirm(`⚠️ Supprimer définitivement l'utilisateur :\n\n"${nom}"\n\nCette action est irréversible.`)) return;
     try {
       // Supprimer le profil (le compte Auth reste dans Supabase)
       const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${id}`, {
