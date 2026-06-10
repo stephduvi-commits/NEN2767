@@ -1611,6 +1611,7 @@ async function saveEditAction(actionId){
   a['encoded_par']=currentUser?(currentUser.nom||currentUser.username):'—';
 
   // Gérer les photos
+  const urlsToDelete = editModalPhotos.filter(p => p.url && (p.toDelete || p.blob)).map(p => p.url);
   const photoUrls=[null,null,null];
   const photoComments=['','',''];
   const active = editModalPhotos.filter(p=>!p.toDelete);
@@ -1660,6 +1661,7 @@ async function saveEditAction(actionId){
   msg.textContent='⏳ Sauvegarde…';
   supabaseUpdate('action','id_action',actionId,record).then(ok=>{
     if(ok){
+      deleteStoragePhotos(urlsToDelete);
       msg.textContent='✓ Modifié avec succès !';
       setTimeout(()=>{closeModal();selectObs(selectedObs['ID_Observation']);},1200);
     } else {
@@ -1668,11 +1670,24 @@ async function saveEditAction(actionId){
       delete simple.photo_url_1;delete simple.photo_url_2;delete simple.photo_url_3;
       delete simple.photo_comment_1;delete simple.photo_comment_2;delete simple.photo_comment_3;
       supabaseUpdate('action','id_action',actionId,simple).then(ok2=>{
-        if(ok2){msg.textContent='✓ Modifié avec succès !';setTimeout(()=>{closeModal();selectObs(selectedObs['ID_Observation']);},1200);}
+        if(ok2){deleteStoragePhotos(urlsToDelete);msg.textContent='✓ Modifié avec succès !';setTimeout(()=>{closeModal();selectObs(selectedObs['ID_Observation']);},1200);}
         else{msg.textContent='❌ Erreur.';msg.style.background='#2e1a1a';msg.style.color='var(--red)';}
       });
     }
   });
+}
+
+// Supprime les anciennes photos du bucket après save (fire-and-forget)
+function deleteStoragePhotos(urls) {
+  const prefix = `${SUPABASE_URL}/storage/v1/object/public/action-photos/`;
+  const prefixes = urls.filter(Boolean).filter(u => u.startsWith(prefix)).map(u => u.slice(prefix.length));
+  if (!prefixes.length) return;
+  const token = supabaseSession ? supabaseSession.access_token : SUPABASE_KEY;
+  fetch(`${SUPABASE_URL}/storage/v1/object/action-photos`, {
+    method: 'DELETE',
+    headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
+    body: JSON.stringify({prefixes})
+  }).catch(() => {});
 }
 
 // Upload photo desktop via Supabase Storage
