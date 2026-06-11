@@ -163,6 +163,8 @@ select.form-input option{background:var(--surface);}
 
 ::-webkit-scrollbar{width:3px;}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+#app-info-overlay{display:none;}
+#app-info-overlay.open{display:flex;}
 </style>
 </head>
 <body>
@@ -232,7 +234,7 @@ select.form-input option{background:var(--surface);}
     </div>
   </div>
   <div class="search-wrap">
-    <input type="search" class="search-input" id="search-bat" placeholder="Rechercher un bâtiment…" oninput="filterBatiments()">
+    <input type="search" class="search-input" id="search-bat" placeholder="Rechercher un bâtiment…" oninput="debouncedFilterBat()">
   </div>
   <div class="content" id="list-batiments">
     <div class="loading"><div class="spinner"></div><span>Chargement…</span></div>
@@ -250,7 +252,7 @@ select.form-input option{background:var(--surface);}
   </div>
   <div style="padding:8px 12px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px;flex-shrink:0">
     <!-- Recherche -->
-    <input type="search" id="obs-search" class="form-input" placeholder="Rechercher une observation…" style="padding:8px 12px;font-size:13px" oninput="renderObservations()">
+    <input type="search" id="obs-search" class="form-input" placeholder="Rechercher une observation…" style="padding:8px 12px;font-size:13px" oninput="debouncedRenderObs()">
     <!-- Filtres -->
     <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px">
       <select id="f-obs-actions" class="filter-btn active" onchange="renderObservations()" style="padding:6px 10px;border-radius:20px;font-size:12px;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:'Inter',sans-serif;cursor:pointer">
@@ -476,6 +478,10 @@ select.form-input option{background:var(--surface);}
 </div>
 
 <script>
+function debounce(fn, ms) {
+  let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
 const SUPABASE_URL = "https://jingwuxekcihiiktsidy.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imppbmd3dXhla2NpaGlpa3RzaWR5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MDE1ODcsImV4cCI6MjA5NDE3NzU4N30.ZKYLIWvi8OqDpUckPl8KmN2ATbEf0Xd1xUjMcXpyFbA";
 const STORAGE_URL = `${SUPABASE_URL}/storage/v1/object/public/action-photos`;
@@ -597,7 +603,7 @@ async function uploadPhoto(blob, filename) {
     },
     body: blob
   });
-  if (res.ok) return `${STORAGE_URL}/${filename}`;
+  if (res.ok) return `${STORAGE_URL}/${filename}?v=${Date.now()}`;
   return null;
 }
 
@@ -774,6 +780,8 @@ function formatDate(input) {
 
 // ===== RENDER BATIMENTS =====
 function filterBatiments() { renderBatiments(document.getElementById('search-bat').value.toLowerCase()); }
+const debouncedFilterBat = debounce(filterBatiments, 200);
+const debouncedRenderObs = debounce(renderObservations, 200);
 
 function renderBatiments(filter='') {
   const el = document.getElementById('list-batiments');
@@ -807,8 +815,8 @@ function renderBatiments(filter='') {
 function selectBat(id) {
   selectedBat = DB.batiments.find(b=>b['ID_Batiment']===id);
   obsFilter = 'all';
-  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelector('.filter-btn').classList.add('active');
+  const sel = document.getElementById('f-obs-actions');
+  if (sel) sel.value = 'all';
   goTo('observations');
 }
 
@@ -1053,6 +1061,10 @@ function refreshWatermark(mode, index) {
   if (!src) return;
   const img = new Image();
   img.crossOrigin = 'anonymous';
+  img.onerror = () => {
+    const preview = document.getElementById(`photo-preview-${mode}-${index}`);
+    if (preview) { preview.alt = '⚠️ Impossible de charger la photo (CORS)'; preview.style.opacity = '0.3'; }
+  };
   img.onload = () => {
     const MAX = 1200;
     let w = img.naturalWidth, h = img.naturalHeight;
@@ -1211,6 +1223,9 @@ function renderPhotoSlots(mode) {
   const btn = document.getElementById(mode === 'add' ? 'btn-add-photo' : 'btn-edit-add-photo');
   if (!container) return;
 
+  container.querySelectorAll('img[id^="photo-preview"]').forEach(img => {
+    if (img.src.startsWith('blob:')) URL.revokeObjectURL(img.src);
+  });
   container.innerHTML = photos[mode].map((slot, i) => {
     const hasBlob = !!slot.blob;
     const hasUrl = !!slot.existingUrl;
@@ -1278,6 +1293,8 @@ async function saveAction() {
   const success = document.getElementById('add-success');
   const error = document.getElementById('add-error');
   success.style.display='none'; error.style.display='none';
+  const backBtn = document.querySelector('#screen-add-action .header-back');
+  if (backBtn) backBtn.style.pointerEvents = 'none';
 
   const nextId = 'ACT-' + Date.now().toString(36).toUpperCase();
   const photoUrls = [null, null, null];
@@ -1352,10 +1369,12 @@ async function saveAction() {
       'photo_comment_3': photoComments[2]||'',
     });
     success.textContent = '✓ Action enregistrée avec succès !';
+    if (backBtn) backBtn.style.pointerEvents = '';
     setTimeout(() => goTo('actions'), 1500);
   } else {
     success.style.display='none';
     error.style.display='block'; error.textContent='❌ Erreur de sauvegarde. Réessayez.';
+    if (backBtn) backBtn.style.pointerEvents = '';
   }
 }
 
@@ -1466,6 +1485,8 @@ async function saveEditAction() {
   const success = document.getElementById('edit-success');
   const error = document.getElementById('edit-error');
   success.style.display = 'none'; error.style.display = 'none';
+  const backBtn = document.querySelector('#screen-edit-action .header-back');
+  if (backBtn) backBtn.style.pointerEvents = 'none';
 
   const a = DB.actions.find(x => x['ID_Action'] === currentEditActionId);
   if (!a) return;
@@ -1561,10 +1582,12 @@ async function saveEditAction() {
     a['photo_comment_2'] = photoComments[1] || '';
     a['photo_comment_3'] = photoComments[2] || '';
     success.textContent = '✓ Action modifiée avec succès !';
+    if (backBtn) backBtn.style.pointerEvents = '';
     setTimeout(() => goTo('actions'), 1500);
   } else {
     success.style.display = 'none';
     error.style.display = 'block'; error.textContent = '❌ Erreur de sauvegarde.';
+    if (backBtn) backBtn.style.pointerEvents = '';
   }
 }
 
@@ -1649,13 +1672,16 @@ function closeLightbox() { document.getElementById('lightbox').classList.remove(
 
 // ===== INIT =====
 document.getElementById('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && _cameraStream) closeCameraOverlay(true);
+});
 
 
 
 
 </script>
 <!-- APP INFO BOTTOM SHEET -->
-<div id="app-info-overlay" onclick="if(event.target===this)closeAppInfo()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;align-items:flex-end;justify-content:center">
+<div id="app-info-overlay" onclick="if(event.target===this)closeAppInfo()" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;align-items:flex-end;justify-content:center">
   <div style="background:var(--surface);border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:480px;box-shadow:0 -4px 24px rgba(0,0,0,.4)">
     <div style="width:40px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 20px"></div>
 
@@ -1715,10 +1741,10 @@ document.getElementById('login-pass').addEventListener('keydown', e => { if(e.ke
 <script>
 function openAppInfo() {
   const el = document.getElementById('app-info-overlay');
-  el.style.display = 'flex';
+  el.classList.add('open');
 }
 function closeAppInfo() {
-  document.getElementById('app-info-overlay').style.display = 'none';
+  document.getElementById('app-info-overlay').classList.remove('open');
 }
 </script>
 
