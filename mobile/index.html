@@ -165,9 +165,12 @@ select.form-input option{background:var(--surface);}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
 #app-info-overlay{display:none;}
 #app-info-overlay.open{display:flex;}
+#offline-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:999;background:#7f1d1d;color:#fca5a5;padding:10px 16px;font-size:13px;font-weight:500;text-align:center;border-bottom:1px solid #991b1b;}
+#offline-banner.visible{display:block;}
 </style>
 </head>
 <body>
+<div id="offline-banner">Hors ligne — les modifications ne seront pas sauvegardées</div>
 
 <!-- CALENDRIER MOBILE -->
 <div class="cal-overlay" id="cal-overlay" onclick="closeCalendar(event)">
@@ -482,6 +485,48 @@ function debounce(fn, ms) {
   let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
 }
 
+const DRAFT_KEY = 'nen2767_draft_action';
+
+function saveDraft(mode) {
+  if (mode !== 'add') return;
+  const draft = {
+    obsId: selectedObs ? selectedObs['ID_Observation'] : null,
+    desc:  document.getElementById('add-desc')?.value || '',
+    date:  document.getElementById('add-date')?.value || '',
+    wo:    document.getElementById('add-wo')?.value   || '',
+    qty:   document.getElementById('add-qty')?.value  || '',
+    unit:  document.getElementById('add-unit')?.value || '',
+    etat:  document.getElementById('add-etat')?.value || '',
+    oknok: document.getElementById('add-oknok')?.value|| '',
+    rem:   document.getElementById('add-rem')?.value  || '',
+    ts:    Date.now()
+  };
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch(_) {}
+}
+
+function restoreDraft() {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    if (!d.obsId || d.obsId !== selectedObs?.['ID_Observation']) return false;
+    if (Date.now() - d.ts > 86400000) { localStorage.removeItem(DRAFT_KEY); return false; }
+    document.getElementById('add-desc').value  = d.desc  || '';
+    document.getElementById('add-date').value  = d.date  || '';
+    document.getElementById('add-wo').value    = d.wo    || '';
+    document.getElementById('add-qty').value   = d.qty   || '';
+    document.getElementById('add-unit').value  = d.unit  || '';
+    document.getElementById('add-etat').value  = d.etat  || '';
+    document.getElementById('add-oknok').value = d.oknok || '';
+    document.getElementById('add-rem').value   = d.rem   || '';
+    return true;
+  } catch(_) { return false; }
+}
+
+function clearDraft() {
+  try { localStorage.removeItem(DRAFT_KEY); } catch(_) {}
+}
+
 const SUPABASE_URL = "https://jingwuxekcihiiktsidy.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imppbmd3dXhla2NpaGlpa3RzaWR5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MDE1ODcsImV4cCI6MjA5NDE3NzU4N30.ZKYLIWvi8OqDpUckPl8KmN2ATbEf0Xd1xUjMcXpyFbA";
 const STORAGE_URL = `${SUPABASE_URL}/storage/v1/object/public/action-photos`;
@@ -641,6 +686,11 @@ async function doLogin() {
     await loadData();
     if (_autoRefreshTimer) clearInterval(_autoRefreshTimer);
     _autoRefreshTimer = setInterval(refreshData, 10 * 60 * 1000);
+    if (_draftTimer) clearInterval(_draftTimer);
+    _draftTimer = setInterval(() => {
+      const active = document.querySelector('.screen.active');
+      if (active?.id === 'screen-add-action') saveDraft('add');
+    }, 30000);
     goTo('batiments');
   } catch(e) {
     err.style.display='block'; err.textContent='❌ ' + (e.message || 'Erreur de connexion.');
@@ -711,6 +761,7 @@ async function loadData() {
 }
 
 let _autoRefreshTimer = null;
+let _draftTimer = null;
 
 async function refreshData() {
   const btn = document.getElementById('btn-refresh');
@@ -735,6 +786,7 @@ async function refreshData() {
 
 // ===== NAVIGATION =====
 function goTo(screen) {
+  if (screen === 'actions') clearDraft();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + screen).classList.add('active');
   if (screen === 'batiments') renderBatiments(document.getElementById('search-bat')?.value?.toLowerCase() || '');
@@ -965,6 +1017,13 @@ function renderAddAction() {
   document.getElementById('add-success').style.display='none';
   document.getElementById('add-error').style.display='none';
   initAddPhotos();
+  const restored = restoreDraft();
+  if (restored) {
+    const banner = document.getElementById('add-success');
+    banner.style.display = 'block';
+    banner.textContent = '📋 Brouillon restauré — dernière saisie récupérée.';
+    setTimeout(() => { banner.style.display = 'none'; }, 3000);
+  }
 }
 
 // ===== SYSTÈME MULTI-PHOTOS =====
@@ -1020,12 +1079,15 @@ function processPhoto(file, mode, index, info) {
       ctx.drawImage(img, 0, 0, w, h);
       // Watermark initial (sans commentaire)
       applyWatermark(canvas, ctx, '', info);
+      const fileSizeMB = file.size / (1024 * 1024);
+      const quality = fileSizeMB > 2 ? 0.60 : fileSizeMB > 1 ? 0.70 : 0.80;
+      photos[mode][index] = photos[mode][index] || {};
+      photos[mode][index].quality = quality;
       canvas.toBlob(blob => {
-        photos[mode][index] = photos[mode][index] || {};
         photos[mode][index].blob = blob;
         photos[mode][index].canvas_data = { img, w, h, info };
         renderPhotoSlots(mode);
-      }, 'image/webp', 0.75);
+      }, 'image/webp', quality);
     };
     img.src = e.target.result;
   };
@@ -1198,7 +1260,7 @@ function captureFromCamera() {
     if (!blob) return;
     const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
     processPhoto(file, mode, index, getWatermarkInfo(mode));
-  }, 'image/jpeg', 0.92);
+  }, 'image/jpeg', 0.82);
 }
 
 function closeCameraOverlay(cancelled) {
@@ -1245,7 +1307,7 @@ function renderPhotoSlots(mode) {
         value="${slot.comment || ''}"
         oninput="photos['${mode}'][${i}].comment=this.value;refreshWatermark('${mode}',${i})"
         style="width:100%;padding:9px 12px;background:var(--surface);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none">
-      ${hasBlob ? `<div style="font-size:11px;color:var(--muted);margin-top:6px">WebP · ${Math.round(slot.blob.size/1024)} KB</div>` : ''}
+      ${hasBlob ? `<div style="font-size:11px;color:var(--muted);margin-top:6px">WebP · ${Math.round(slot.blob.size/1024)} KB · q${Math.round((slot.quality||0.75)*100)}%</div>` : ''}
     </div>`;
   }).join('');
 
@@ -1290,6 +1352,14 @@ function handleEditPhoto() {}
 
 // ===== SAVE ACTION =====
 async function saveAction() {
+  if (!navigator.onLine) {
+    saveDraft('add');
+    document.getElementById('add-error').style.display = 'block';
+    document.getElementById('add-error').textContent =
+      '⚠️ Hors ligne — brouillon sauvegardé. Réessayez une fois connecté.';
+    return;
+  }
+  clearDraft();
   const success = document.getElementById('add-success');
   const error = document.getElementById('add-error');
   success.style.display='none'; error.style.display='none';
@@ -1482,6 +1552,12 @@ function openViewAction(actionId) {
 }
 
 async function saveEditAction() {
+  if (!navigator.onLine) {
+    document.getElementById('edit-error').style.display = 'block';
+    document.getElementById('edit-error').textContent =
+      '⚠️ Hors ligne — brouillon sauvegardé. Réessayez une fois connecté.';
+    return;
+  }
   const success = document.getElementById('edit-success');
   const error = document.getElementById('edit-error');
   success.style.display = 'none'; error.style.display = 'none';
@@ -1675,6 +1751,17 @@ document.getElementById('login-pass').addEventListener('keydown', e => { if(e.ke
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && _cameraStream) closeCameraOverlay(true);
 });
+function updateOnlineStatus() {
+  const banner = document.getElementById('offline-banner');
+  if (!navigator.onLine) {
+    banner.classList.add('visible');
+  } else {
+    banner.classList.remove('visible');
+  }
+}
+window.addEventListener('online',  updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+updateOnlineStatus();
 
 
 
