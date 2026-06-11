@@ -1,0 +1,26 @@
+[
+  {
+    "id": "4a110b43-79ff-439d-b3ca-415df3e51cdb",
+    "nom": "steph.duvi",
+    "role": "admin",
+    "actif": true
+  },
+  {
+    "id": "d0871078-e193-42ac-8592-18f99005854d",
+    "nom": "Quentin Joliet",
+    "role": "admin",
+    "actif": true
+  },
+  {
+    "id": "47a17de8-9520-4c45-be09-5fb6a874f9b6",
+    "nom": "Remy Hocquet",
+    "role": "admin",
+    "actif": true
+  },
+  {
+    "id": "99f78215-1520-49fa-a63f-9d69840b3a97",
+    "nom": "stephane.duvivier",
+    "role": "admin",
+    "actif": true
+  }
+]
