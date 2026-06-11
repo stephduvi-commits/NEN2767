@@ -270,7 +270,7 @@ select.form-input option{background:var(--header-bg);}
       </div>
       <div class="form-group">
         <label>Mot de passe</label>
-        <input type="password" id="login-pass" class="form-input" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" autocomplete="current-password" />
+        <input type="password" id="login-pass" class="form-input" placeholder="••••••••" autocomplete="current-password" />
       </div>
       <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Se connecter</button>
     </div>
@@ -746,7 +746,7 @@ async function doLogin() {
   const err = document.getElementById('login-error');
   const btn = document.getElementById('login-btn');
   if (!email || !password) { err.style.display='block'; err.textContent='Remplissez tous les champs.'; return; }
-  btn.textContent = 'â³ Connexion…'; btn.disabled = true;
+  btn.textContent = '⏳ Connexion…'; btn.disabled = true;
   try {
     const session = await signIn(email, password);
     supabaseSession = session;
@@ -767,7 +767,6 @@ async function doLogin() {
       role: profile.role || 'client'
     };
     err.style.display='none';
-    document.getElementById('header-user').textContent = currentUser.name + ' Â· ' + (currentUser.role === 'admin' ? '' : currentUser.role === 'contributeur' ? '' : 'ðŸ‘');
     await loadData();
     if (_autoRefreshTimer) clearInterval(_autoRefreshTimer);
     _autoRefreshTimer = setInterval(refreshData, 10 * 60 * 1000);
@@ -823,7 +822,7 @@ async function loadData() {
       'Quantité': String(o.quantite||''), 'Unité': o.unite||''
     }));
     // NOTE : champs renommés en clés françaises pour cohérence avec le desktop.
-    // Si tu ajoutes une colonne Supabase, pense Ã  l'ajouter ici.
+    // Si tu ajoutes une colonne Supabase, pense à l'ajouter ici.
     DB.actions = acts.map(a => ({
       'ID_Action': a.id_action, 'ID_Observation': a.id_observation,
       'Num_Action': String(a.num_action||''), 'Description': a.description||'',
@@ -940,7 +939,7 @@ function renderBatiments(filter='') {
       <div class="nen-dot" style="background:${nenBg(b['État bâtiment'])};color:${nenFg(b['État bâtiment'])}">${b['État bâtiment']||'?'}</div>
       <div class="card-content">
         <div class="card-title">${b['Nom']||b['ID_Batiment']}</div>
-        <div class="card-sub">${b['Lieu']} Â· ${b['Code objet']}</div>
+        <div class="card-sub">${b['Lieu']} · ${b['Code objet']}</div>
         <div class="card-meta">
           <span class="badge" style="background:var(--border);color:var(--muted)">${obs.length} obs</span>
           ${actCount>0?`<span class="badge flag-action"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> ${actCount}</span>`:'<span class="badge flag-noaction">0</span>'}
@@ -1009,7 +1008,7 @@ function renderObservations() {
       <div class="nen-dot" style="background:${nenBg(o['État'])};color:${nenFg(o['État'])};width:36px;height:36px;font-size:13px">${o['État']}</div>
       <div class="card-content">
         <div class="card-title">${o['Élément']||o['ID_Observation']}</div>
-        <div class="card-sub">${o['Procédure']} Â· P${o['Priorité']}</div>
+        <div class="card-sub">${o['Procédure']} · P${o['Priorité']}</div>
         <div class="card-meta">
           <span class="badge" style="background:${nenBg(ep)}33;color:${nenBg(ep)}">${ep} ${arrow}</span>
           ${acts.length>0?`<span class="badge flag-action"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> ${acts.length}</span>`:'<span class="badge flag-noaction">0</span>'}
@@ -1030,7 +1029,7 @@ function selectObs(id) {
 function renderActions() {
   if (!selectedObs) return;
   document.getElementById('act-obs-title').textContent = selectedObs['Élément']||selectedObs['ID_Observation'];
-  document.getElementById('act-obs-sub').textContent = selectedObs['NL/SfB']+' Â· '+selectedObs['ID_Observation'];
+  document.getElementById('act-obs-sub').textContent = selectedObs['NL/SfB']+' · '+selectedObs['ID_Observation'];
   const fab = document.getElementById('fab-add');
   fab.style.display = isContrib() ? 'flex' : 'none';
   const acts = getActions(selectedObs['ID_Observation']);
@@ -1054,7 +1053,7 @@ function renderActions() {
       acts.map(a => `
         <div class="action-card">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <span style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">${a['ID_Action']} Â· #${a['Num_Action']}</span>
+            <span style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">${a['ID_Action']} · #${a['Num_Action']}</span>
             <span class="badge ${a['OK_NOK']?.toLowerCase()==='ok'?'ok-badge':a['OK_NOK']?.toLowerCase()==='nok'?'nok-badge':''}">${a['OK_NOK']||'—'}</span>
           </div>
           ${a['Description']?`<div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px">${a['Description']}</div>`:''}
@@ -1110,7 +1109,7 @@ function renderAddAction() {
   if (restored) {
     const banner = document.getElementById('add-success');
     banner.style.display = 'block';
-    banner.textContent = 'ðŸ“‹ Brouillon restauré — dernière saisie récupérée.';
+    banner.textContent = '📋 Brouillon restauré — dernière saisie récupérée.';
     setTimeout(() => { banner.style.display = 'none'; }, 3000);
   }
 }
@@ -1143,7 +1142,7 @@ function applyWatermark(canvas, ctx, comment, info) {
   const fs2 = Math.max(10, Math.round(barH * 0.24));
   ctx.font = `${fs2}px Arial`;
   ctx.fillStyle = '#ffffff';
-  ctx.fillText(info.obs + '  â€¢  ' + info.date, 10, h - barH + fs1 + fs2 + 8, w - 20);
+  ctx.fillText(info.obs + '  •  ' + info.date, 10, h - barH + fs1 + fs2 + 8, w - 20);
   // L3 — descriptif photo (gris clair, italique)
   if (comment) {
     const fs3 = Math.max(9, Math.round(barH * 0.21));
@@ -1192,7 +1191,7 @@ function refreshWatermark(mode, index) {
   // Si on a les données canvas en mémoire â†’ recalcul direct
   if (slot.canvas_data) {
     const { img, w, h } = slot.canvas_data;
-    // Mettre Ã  jour info avec la date courante
+    // Mettre à jour info avec la date courante
     slot.canvas_data.info = info;
     const canvas = document.createElement('canvas');
     canvas.width = w; canvas.height = h;
@@ -1391,12 +1390,12 @@ function renderPhotoSlots(mode) {
           <button onclick="removePhotoSlot('${mode}',${i})" style="padding:4px 10px;background:#2e1a1a;border:1px solid #4a2a2a;border-radius:6px;color:var(--red);font-size:12px;cursor:pointer;font-family:'Inter',sans-serif"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
         </div>
       </div>
-      ${src ? `<img id="photo-preview-${mode}-${i}" src="${src}" style="width:100%;border-radius:8px;max-height:180px;object-fit:cover;margin-bottom:8px" onclick="openLightbox('${src}')">` : `<div style="height:80px;background:var(--surface);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;margin-bottom:8px">â³ En attente</div>`}
+      ${src ? `<img id="photo-preview-${mode}-${i}" src="${src}" style="width:100%;border-radius:8px;max-height:180px;object-fit:cover;margin-bottom:8px" onclick="openLightbox('${src}')">` : `<div style="height:80px;background:var(--surface);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;margin-bottom:8px">⏳ En attente</div>`}
       <input type="text" placeholder="Commentaire photo (watermark)…"
         value="${slot.comment || ''}"
         oninput="photos['${mode}'][${i}].comment=this.value;refreshWatermark('${mode}',${i})"
         style="width:100%;padding:9px 12px;background:var(--surface);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none">
-      ${hasBlob ? `<div style="font-size:11px;color:var(--muted);margin-top:6px">WebP Â· ${Math.round(slot.blob.size/1024)} KB Â· q${Math.round((slot.quality||0.75)*100)}%</div>` : ''}
+      ${hasBlob ? `<div style="font-size:11px;color:var(--muted);margin-top:6px">WebP · ${Math.round(slot.blob.size/1024)} KB · q${Math.round((slot.quality||0.75)*100)}%</div>` : ''}
     </div>`;
   }).join('');
 
@@ -1459,10 +1458,10 @@ async function saveAction() {
   const photoUrls = [null, null, null];
   const photoComments = ['', '', ''];
 
-  // Upload jusqu'Ã  3 photos
+  // Upload jusqu'à 3 photos
   const slots = photos.add.filter(s => s.blob);
   if (slots.length > 0) {
-    success.style.display='block'; success.textContent=`â³ Upload des photos (0/${slots.length})…`;
+    success.style.display='block'; success.textContent=`⏳ Upload des photos (0/${slots.length})…`;
     for (let i = 0; i < Math.min(slots.length, 3); i++) {
       const slot = slots[i];
       const filename = `${selectedObs['ID_Observation']}_${nextId}_${i+1}.webp`;
@@ -1470,7 +1469,7 @@ async function saveAction() {
       if (url) {
         photoUrls[i] = url;
         photoComments[i] = slot.comment || '';
-        success.textContent = `â³ Upload des photos (${i+1}/${slots.length})…`;
+        success.textContent = `⏳ Upload des photos (${i+1}/${slots.length})…`;
       } else {
         error.style.display='block'; error.textContent=`âš ï¸ Erreur upload photo ${i+1}.`;
       }
@@ -1503,7 +1502,7 @@ async function saveAction() {
     action.photo_comment_3 = photoComments[2] || null;
   }
 
-  success.style.display='block'; success.textContent='â³ Sauvegarde…';
+  success.style.display='block'; success.textContent='⏳ Sauvegarde…';
 
   // Tentative avec champs multi-photos, fallback sans si colonnes absentes
   let ok = await sbInsert('action', action);
@@ -1587,7 +1586,7 @@ async function shareAction(actionId) {
     `NEN2767 AMAYFA — ${bat}\n` +
     `Observation : ${obs}\n` +
     `Action #${a['Num_Action']} — ${a['Description'] || '—'}\n` +
-    `Date : ${a['Date'] || '—'} Â· État estimé : ${a['Etat_estime'] || '—'} Â· ${a['OK_NOK'] || '—'}` +
+    `Date : ${a['Date'] || '—'} · État estimé : ${a['Etat_estime'] || '—'} · ${a['OK_NOK'] || '—'}` +
     (a['WO']        ? `\nWO : ${a['WO']}`               : '') +
     (a['Remarques'] ? `\nRemarques : ${a['Remarques']}`  : '');
 
@@ -1643,7 +1642,7 @@ function openEditAction(actionId) {
 function openViewAction(actionId) {
   const a = DB.actions.find(x => x['ID_Action'] === actionId);
   if (!a) return;
-  document.getElementById('view-action-id').textContent = actionId + ' Â· #' + (a['Num_Action'] || '');
+  document.getElementById('view-action-id').textContent = actionId + ' · #' + (a['Num_Action'] || '');
   const qObs = parseFloat(selectedObs ? selectedObs['Quantité'] : 0) || 0;
   const qReal = parseFloat(a['Quantite_realisee']) || 0;
   const pct = qObs && qReal ? Math.round((qReal / qObs) * 100) : null;
@@ -1711,7 +1710,7 @@ async function saveEditAction() {
   // Uploader les nouvelles photos (blobs) et conserver les existingUrl
   const slots = photos.edit;
   if (slots.some(s => s.blob)) {
-    success.style.display = 'block'; success.textContent = 'â³ Upload des photos…';
+    success.style.display = 'block'; success.textContent = '⏳ Upload des photos…';
   }
   for (let i = 0; i < Math.min(slots.length, 3); i++) {
     const slot = slots[i];
@@ -1756,7 +1755,7 @@ async function saveEditAction() {
     data.photo_comment_3 = photoComments[2] || null;
   }
 
-  success.style.display = 'block'; success.textContent = 'â³ Sauvegarde…';
+  success.style.display = 'block'; success.textContent = '⏳ Sauvegarde…';
 
   // Tentative avec champs multi-photos, fallback sans si erreur colonne
   let ok = await sbUpdate('action', 'id_action', currentEditActionId, data);
@@ -1955,7 +1954,7 @@ function updateHamburgerUser() {
       </div>
       <div>
         <div style="font-size:16px;font-weight:800">NEN 2767 <span style="color:#f49634">AMAYFA</span></div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px">Camp Adjudant Brasseur Â· ELU Service For You</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">Camp Adjudant Brasseur · ELU Service For You</div>
       </div>
     </div>
 
@@ -1967,7 +1966,7 @@ function updateHamburgerUser() {
       </div>
       <div style="flex:1;background:var(--bg);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)">
         <div style="font-size:14px;font-weight:700;color:var(--text)">Mai 2026</div>
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:3px">Mise Ã  jour</div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:3px">Mise à jour</div>
       </div>
     </div>
 
@@ -1976,15 +1975,15 @@ function updateHamburgerUser() {
     <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:20px">
       <div style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
         <span style="color:#22c55e;font-size:14px;flex-shrink:0;margin-top:1px">âœ“</span>
-        <div><div style="font-size:13px;font-weight:500">Multi-photos (3 max)</div><div style="font-size:11px;color:var(--muted);margin-top:1px">Galerie ou caméra Â· jusqu'Ã  3 photos par action</div></div>
+        <div><div style="font-size:13px;font-weight:500">Multi-photos (3 max)</div><div style="font-size:11px;color:var(--muted);margin-top:1px">Galerie ou caméra · jusqu'à 3 photos par action</div></div>
       </div>
       <div style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
         <span style="color:#22c55e;font-size:14px;flex-shrink:0;margin-top:1px">âœ“</span>
-        <div><div style="font-size:13px;font-weight:500">Watermark automatique</div><div style="font-size:11px;color:var(--muted);margin-top:1px">Bâtiment Â· élément Â· date Â· commentaire gravé sur chaque photo</div></div>
+        <div><div style="font-size:13px;font-weight:500">Watermark automatique</div><div style="font-size:11px;color:var(--muted);margin-top:1px">Bâtiment · élément · date · commentaire gravé sur chaque photo</div></div>
       </div>
       <div style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
         <span style="color:#22c55e;font-size:14px;flex-shrink:0;margin-top:1px">âœ“</span>
-        <div><div style="font-size:13px;font-weight:500">Commentaire photo en temps réel</div><div style="font-size:11px;color:var(--muted);margin-top:1px">Saisie après upload Â· watermark mis Ã  jour immédiatement</div></div>
+        <div><div style="font-size:13px;font-weight:500">Commentaire photo en temps réel</div><div style="font-size:11px;color:var(--muted);margin-top:1px">Saisie après upload · watermark mis à jour immédiatement</div></div>
       </div>
       <div style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
         <span style="color:#22c55e;font-size:14px;flex-shrink:0;margin-top:1px">âœ“</span>
