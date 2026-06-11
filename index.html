@@ -1250,7 +1250,7 @@ function renderObservation(){
           <select id="f-etat2"><option value="">— Sélectionner —</option>${[1,2,3,4,5,6].map(i=>`<option value="${i}">${i} — ${nenLabel(i)}</option>`).join('')}</select>
         </div>
         <div class="form-group"><label>Statut</label>
-          <select id="f-oknok"><option value="">— Sélectionner —</option><option value="ok">Terminé</option><option value="nok">En cours</option><option value="ouvert">Ouvert</option></select>
+          <select id="f-oknok"><option value="">— Sélectionner —</option><option value="ok">Terminé</option><option value="nok">En cours</option><option value="ouvert">Ouvert</option><option value="supprimé">Supprimé</option></select>
         </div>
         <div class="form-group full"><label>Remarques</label><textarea id="f-rem" placeholder="Remarques…"></textarea></div>
       </div>
@@ -1422,7 +1422,7 @@ function openEditModal(actionId){
         <select id="m-etat"><option value="">— Sélectionner —</option>${[1,2,3,4,5,6].map(i=>`<option value="${i}" ${a['Etat_estime']==i?'selected':''}>${i} — ${nenLabel(i)}</option>`).join('')}</select>
       </div>
       <div class="form-group"><label>Statut</label>
-        <select id="m-oknok"><option value="">—</option><option value="ok" ${a['OK_NOK']==='ok'?'selected':''}>Terminé</option><option value="nok" ${a['OK_NOK']==='nok'?'selected':''}>En cours</option><option value="ouvert" ${a['OK_NOK']==='ouvert'?'selected':''}>Ouvert</option></select>
+        <select id="m-oknok"><option value="">—</option><option value="ok" ${a['OK_NOK']==='ok'?'selected':''}>Terminé</option><option value="nok" ${a['OK_NOK']==='nok'?'selected':''}>En cours</option><option value="ouvert" ${a['OK_NOK']==='ouvert'?'selected':''}>Ouvert</option><option value="supprimé" ${a['OK_NOK']==='supprimé'?'selected':''}>Supprimé</option></select>
       </div>
       <div class="form-group full"><label>Remarques</label><textarea id="m-rem">${a['Remarques']||''}</textarea></div>
       <div class="form-group full">
