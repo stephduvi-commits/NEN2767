@@ -1,0 +1,35 @@
+name: Backup Supabase hebdomadaire
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'  # Chaque lundi à 6h00
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Installer requests
+        run: pip install requests
+
+      - name: Lancer le backup
+        env:
+          SUPABASE_URL: https://jingwuxekcihiiktsidy.supabase.co
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python .github/scripts/backup_supabase.py
+
+      - name: Commiter le backup
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add backups/
+          git diff --staged --quiet || git commit -m "Backup Supabase $(date +'%Y-%m-%d')"
+          git push
