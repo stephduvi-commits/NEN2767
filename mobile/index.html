@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -16,49 +16,103 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
-  --bg:#0f0f13;--surface:#16161f;--border:#1e1e2a;--border2:#2a2a3a;
-  --text:#e8e6f0;--muted:#6b6b85;--accent:#f49634;
-  --green:#22c55e;--red:#ef4444;--orange:#f97316;
+  --bg:#0d0d1a;
+  --surface:#151528;
+  --header-bg:#111128;
+  --border:#2a2a3a;
+  --border2:#1e1e3a;
+  --text:#eeeeee;
+  --muted:#555555;
+  --accent:#E87722;
+  --green:#5DCAA5;
+  --blue:#85B7EB;
+  --red:#E24B4A;
+  --orange:#E87722;
 }
 html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);}
+
 .screen{display:none;flex-direction:column;height:100vh;overflow:hidden;}
 .screen.active{display:flex;}
 
 /* HEADER */
-.header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
-.header-back{color:var(--muted);font-size:22px;cursor:pointer;padding:4px;min-width:32px;}
+.header{background:var(--header-bg);border-bottom:1.5px solid var(--accent);padding:0 16px;height:52px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.header-back{color:var(--muted);font-size:20px;cursor:pointer;padding:4px;min-width:28px;display:flex;align-items:center;}
 .header-title{font-size:16px;font-weight:700;flex:1;}
 .header-sub{font-size:11px;color:var(--muted);}
 .header-logo{height:28px;width:auto;}
 .header-right{color:var(--muted);font-size:13px;}
+.header-brand{display:flex;flex-direction:column;flex:1;}
+.header-brand-name{font-size:14px;font-weight:700;color:var(--accent);letter-spacing:.3px;}
+.header-brand-sub{font-size:10px;color:var(--muted);margin-top:1px;}
+.header-icon-btn{width:28px;height:28px;background:#1a1a2e;border:0.5px solid var(--border);border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
 
 /* CONTENT */
 .content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px;}
 .content-padded{padding:16px;}
 
 /* SEARCH */
-.search-wrap{padding:12px;background:var(--surface);border-bottom:1px solid var(--border);}
-.search-input{width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-family:'Inter',sans-serif;font-size:15px;outline:none;}
+.search-wrap{padding:10px 12px;background:var(--header-bg);border-bottom:0.5px solid var(--border2);}
+.search-input{width:100%;padding:9px 14px 9px 36px;background:#1a1a2e;border:0.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;outline:none;position:relative;}
 .search-input::placeholder{color:var(--muted);}
+.search-wrap-inner{position:relative;}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#444;pointer-events:none;}
 
 /* CARDS */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;cursor:pointer;active:background:#1a1a28;transition:background 0.1s;}
-.card:active{background:#1a1a28;}
+.card{background:var(--surface);border:0.5px solid var(--border);border-radius:10px;padding:12px 12px 10px 14px;margin-bottom:8px;cursor:pointer;transition:background 0.1s;overflow:hidden;}
+.card:active{background:#1a1a30;}
 .card-content{flex:1;min-width:0;}
-.card-title{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.card-sub{font-size:12px;color:var(--muted);margin-top:2px;}
-.card-meta{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;}
+.card-title{font-size:14px;font-weight:600;color:var(--text);}
+.card-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.card-meta{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap;}
 .chevron{color:var(--border2);font-size:18px;}
 
 /* NEN DOT */
 .nen-dot{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff;flex-shrink:0;}
 
 /* BADGES */
-.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap;}
-.ok-badge{background:#1a2e1a;color:var(--green);}
-.nok-badge{background:#2e1a1a;color:var(--red);}
-.flag-action{background:#1a2e1a;color:var(--green);}
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;white-space:nowrap;}
+.ok-badge{background:#085041;color:#5DCAA5;}
+.nok-badge{background:#1a3a5a;color:#85B7EB;}
+.flag-action{background:#085041;color:#5DCAA5;}
 .flag-noaction{background:var(--border);color:var(--muted);}
+.nen-1{background:#085041;color:#5DCAA5;}
+.nen-2{background:#085041;color:#9FE1CB;}
+.nen-3{background:#185FA5;color:#85B7EB;}
+.nen-4{background:#633806;color:#FAC775;}
+.nen-5{background:#791F1F;color:#F7C1C1;}
+.nen-6{background:#791F1F;color:#F09595;}
+.badge-terminé{background:#085041;color:#5DCAA5;}
+.badge-en_cours{background:#1a3a5a;color:#85B7EB;}
+.badge-ouvert{background:#2a2a1a;color:#E87722;}
+.badge-supprimé{background:#2a1a1a;color:#888;}
+/* PILLS */
+.pill{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;background:#1e1e3a;border-radius:5px;font-size:10px;color:var(--muted);}
+.pill-green{color:var(--green);}
+.pill-blue{color:var(--blue);}
+/* PROGRESS BAR */
+.progress-bar-wrap{height:3px;background:#1e1e3a;border-radius:2px;margin-top:8px;overflow:hidden;}
+.progress-bar-fill{height:100%;background:var(--green);border-radius:2px;transition:width 0.3s;}
+.progress-labels{display:flex;justify-content:space-between;margin-top:3px;}
+.progress-label{font-size:10px;color:#444;}
+/* STATS BAR */
+.stats-bar{display:flex;background:var(--header-bg);border-bottom:0.5px solid var(--border2);flex-shrink:0;}
+.stats-bar-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;border-right:0.5px solid var(--border2);}
+.stats-bar-item:last-child{border-right:none;}
+.stats-bar-value{font-size:16px;font-weight:700;}
+.stats-bar-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:1px;}
+/* HAMBURGER MENU */
+.hamburger-menu{display:none;background:var(--header-bg);border-bottom:0.5px solid var(--border2);flex-direction:column;gap:2px;padding:8px 12px;flex-shrink:0;}
+.hamburger-menu.open{display:flex;}
+.hamburger-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;font-size:13px;}
+.hamburger-item-icon{font-size:15px;width:20px;text-align:center;}
+.hamburger-item-main{font-size:13px;font-weight:500;color:var(--text);}
+.hamburger-item-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.hamburger-item-logout{border:0.5px solid #3a1a1a;border-radius:8px;cursor:pointer;}
+.hamburger-item-logout .hamburger-item-main{color:var(--red);}
+/* OBS ACTION ROW */
+.obs-action-row{padding:8px 12px;border-top:0.5px solid var(--border2);background:var(--header-bg);display:flex;align-items:flex-start;gap:8px;}
+.obs-action-desc{font-size:9px;color:#ccc;flex:1;}
+.obs-action-meta{font-size:8px;color:var(--muted);margin-top:2px;}
 
 /* INFO CARD */
 .info-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:12px;}
@@ -81,16 +135,18 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 /* FORMULAIRE */
 .form-group{margin-bottom:14px;}
 .form-group label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:6px;}
-.form-input{width:100%;padding:12px 14px;background:var(--surface);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-family:'Inter',sans-serif;font-size:15px;outline:none;transition:border-color 0.2s;}
+.form-input{width:100%;padding:12px 14px;background:#1a1a2e;border:0.5px solid var(--border);border-radius:10px;color:var(--text);font-family:'Inter',sans-serif;font-size:15px;outline:none;transition:border-color 0.2s;}
 .form-input:focus{border-color:var(--accent);}
 .form-input[disabled]{opacity:0.5;}
 textarea.form-input{resize:none;min-height:80px;}
-select.form-input option{background:var(--surface);}
+select.form-input option{background:var(--header-bg);}
+/* ADD ACTION BUTTON */
+.btn-add-action{width:100%;padding:10px;background:var(--bg);border:0.5px dashed var(--accent);border-radius:8px;color:var(--accent);font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px;}
 
 /* BOUTONS */
 .btn{width:100%;padding:14px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;border:none;font-family:'Inter',sans-serif;transition:all 0.2s;}
 .btn-primary{background:var(--accent);color:#fff;}
-.btn-primary:active{background:#d4801e;}
+.btn-primary:active{background:#c4631a;}
 .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border2);margin-top:8px;}
 .btn-sm{width:auto;padding:8px 14px;font-size:13px;}
 .btn-photo{background:#1a1e2e;color:#6366f1;border:1px dashed #6366f1;padding:16px;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;cursor:pointer;font-size:15px;font-weight:500;width:100%;margin-bottom:14px;}
@@ -111,15 +167,15 @@ select.form-input option{background:var(--surface);}
 
 /* LOGIN */
 .login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:var(--bg);}
-.login-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px 24px;width:100%;max-width:380px;}
+.login-card{background:var(--surface);border:0.5px solid var(--border);border-radius:16px;padding:32px 24px;width:100%;max-width:380px;}
 .login-logo{text-align:center;margin-bottom:24px;}
 .login-title{font-size:22px;font-weight:800;color:var(--accent);margin-top:12px;}
 .login-sub{font-size:13px;color:var(--muted);margin-top:4px;}
 .login-error{background:#2e1a1a;border:1px solid #4a2a2a;border-radius:8px;padding:10px 14px;color:var(--red);font-size:13px;margin-bottom:14px;display:none;}
 
 /* FAB */
-.fab{position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;background:var(--accent);border:none;color:#fff;font-size:24px;cursor:pointer;box-shadow:0 4px 16px rgba(244,150,52,0.4);display:flex;align-items:center;justify-content:center;z-index:50;}
-.fab:active{background:#d4801e;transform:scale(0.95);}
+.fab{position:fixed;bottom:24px;right:20px;width:52px;height:52px;border-radius:50%;background:var(--accent);border:none;color:#fff;font-size:22px;cursor:pointer;box-shadow:0 4px 20px rgba(232,119,34,0.45);display:flex;align-items:center;justify-content:center;z-index:50;}
+.fab:active{background:#c4631a;transform:scale(0.95);}
 
 /* LOADING */
 .loading{display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;gap:12px;color:var(--muted);}
@@ -138,8 +194,8 @@ select.form-input option{background:var(--surface);}
 
 /* FILTER BAR */
 .filter-bar{display:flex;gap:8px;padding:8px 12px;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0;}
-.filter-btn{padding:6px 12px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--muted);white-space:nowrap;font-family:'Inter',sans-serif;}
-.filter-btn.active{background:#2a1e0e;color:var(--accent);border-color:var(--accent);}
+.filter-btn{padding:5px 11px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:0.5px solid var(--border);background:#1a1a2e;color:var(--muted);white-space:nowrap;font-family:'Inter',sans-serif;}
+.filter-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
 
 /* CALENDRIER */
 .cal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:400;display:none;align-items:flex-end;justify-content:center;}
@@ -180,9 +236,9 @@ select.form-input option{background:var(--surface);}
   <div class="cal-popup" id="cal-popup">
     <div class="cal-handle"></div>
     <div class="cal-header">
-      <button class="cal-nav" onclick="calNav(-1)">‹</button>
+      <button class="cal-nav" onclick="calNav(-1)">â€¹</button>
       <span class="cal-month" id="cal-month-label"></span>
-      <button class="cal-nav" onclick="calNav(1)">›</button>
+      <button class="cal-nav" onclick="calNav(1)">â€º</button>
     </div>
     <div class="cal-grid" id="cal-grid"></div>
     <div class="cal-actions">
@@ -214,7 +270,7 @@ select.form-input option{background:var(--surface);}
       </div>
       <div class="form-group">
         <label>Mot de passe</label>
-        <input type="password" id="login-pass" class="form-input" placeholder="••••••••" autocomplete="current-password" />
+        <input type="password" id="login-pass" class="form-input" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" autocomplete="current-password" />
       </div>
       <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Se connecter</button>
     </div>
@@ -223,26 +279,45 @@ select.form-input option{background:var(--surface);}
 
 <!-- SCREEN: BATIMENTS -->
 <div class="screen" id="screen-batiments">
-    <div class="header" style="padding:10px 16px">
-    <img src="data:image/png;base64,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" class="header-logo" alt="ELU">
-    <div style="flex:1">
-      <div class="header-title">NEN 2767</div>
-      <div class="header-sub" id="header-user"></div>
+  <div class="header">
+    <div class="header-brand">
+      <span class="header-brand-name">NEN2767 AMAYFA</span>
+      <span class="header-brand-sub">Camp Adjudant Brasseur · Amay</span>
     </div>
-    <div onclick="doLogout()" style="cursor:pointer;padding:6px;background:#2a1e0e;border-radius:8px;display:flex;align-items:center;justify-content:center">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    <div class="header-icon-btn" id="btn-refresh" onclick="refreshData()" title="Actualiser">
+      <svg id="refresh-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5DCAA5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
     </div>
-    <div onclick="openAppInfo()" style="cursor:pointer;padding:6px;margin-left:6px;display:flex;align-items:center;justify-content:center;color:var(--muted)">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <div class="header-icon-btn" id="btn-hamburger" onclick="toggleHamburger()" title="Menu">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaaaaa" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </div>
-    <div id="btn-refresh" onclick="refreshData()" style="cursor:pointer;padding:6px;margin-left:6px;display:flex;align-items:center;justify-content:center;color:var(--muted)">
-      <svg id="refresh-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+  </div>
+  <!-- HAMBURGER MENU -->
+  <div class="hamburger-menu" id="hamburger-menu">
+    <div class="hamburger-item">
+      <span class="hamburger-item-icon">ℹ️</span>
+      <div><div class="hamburger-item-main">À propos</div><div class="hamburger-item-sub">NEN2767 AMAYFA v2.4</div></div>
     </div>
+    <div class="hamburger-item">
+      <span class="hamburger-item-icon">👤</span>
+      <div><div class="hamburger-item-main" id="hm-user-email">—</div><div class="hamburger-item-sub" id="hm-user-role">—</div></div>
+    </div>
+    <div class="hamburger-item hamburger-item-logout" onclick="doLogout()">
+      <span class="hamburger-item-icon" style="color:var(--red)">←</span>
+      <div><div class="hamburger-item-main">Se déconnecter</div></div>
+    </div>
+  </div>
+  <!-- STATS BAR -->
+  <div class="stats-bar">
+    <div class="stats-bar-item"><div class="stats-bar-value" id="sb-bats" style="color:#E87722">—</div><div class="stats-bar-label">Bâtiments</div></div>
+    <div class="stats-bar-item"><div class="stats-bar-value" id="sb-obs" style="color:#5DCAA5">—</div><div class="stats-bar-label">Observations</div></div>
+    <div class="stats-bar-item"><div class="stats-bar-value" id="sb-acts" style="color:#85B7EB">—</div><div class="stats-bar-label">Actions</div></div>
   </div>
   <div class="search-wrap">
-    <input type="search" class="search-input" id="search-bat" placeholder="Rechercher un bâtiment…" oninput="debouncedFilterBat()">
-  </div>
-  <div class="content" id="list-batiments">
+    <div class="search-wrap-inner">
+      <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="search" class="search-input" id="search-bat" placeholder="Rechercher un bâtiment..." oninput="debouncedFilterBat()">
+    </div>
+  </div>  <div class="content" id="list-batiments">
     <div class="loading"><div class="spinner"></div><span>Chargement…</span></div>
   </div>
 </div>
@@ -250,10 +325,13 @@ select.form-input option{background:var(--surface);}
 <!-- SCREEN: OBSERVATIONS -->
 <div class="screen" id="screen-observations">
   <div class="header">
-    <span class="header-back" onclick="goTo('batiments')">‹</span>
-    <div style="flex:1">
-      <div class="header-title" id="obs-bat-title">Bâtiment</div>
-      <div class="header-sub" id="obs-bat-sub"></div>
+    <span class="header-back" onclick="goTo('batiments')">â€¹</span>
+    <div class="header-brand">
+      <span class="header-brand-name" id="obs-bat-title">Bâtiment</span>
+      <span class="header-brand-sub" id="obs-bat-sub"></span>
+    </div>
+    <div class="header-icon-btn" onclick="refreshData()" title="Actualiser">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5DCAA5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
     </div>
   </div>
   <div style="padding:8px 12px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px;flex-shrink:0">
@@ -277,23 +355,23 @@ select.form-input option{background:var(--surface);}
 <!-- SCREEN: ACTIONS -->
 <div class="screen" id="screen-actions">
   <div class="header">
-    <span class="header-back" onclick="goTo('observations')">‹</span>
-    <div style="flex:1">
-      <div class="header-title" id="act-obs-title">Observation</div>
-      <div class="header-sub" id="act-obs-sub"></div>
+    <span class="header-back" onclick="goTo('observations')">â€¹</span>
+    <div class="header-brand">
+      <span class="header-brand-name" id="act-obs-title">Observation</span>
+      <span class="header-brand-sub" id="act-obs-sub"></span>
     </div>
   </div>
   <div class="content" id="list-actions"></div>
-  <div id="fab-add" class="fab" onclick="goTo('add-action')" style="display:none">＋</div>
+  <div id="fab-add" class="fab" onclick="goTo('add-action')" style="display:none">ï¼‹</div>
 </div>
 
 <!-- SCREEN: VIEW ACTION -->
 <div class="screen" id="screen-view-action">
   <div class="header">
-    <span class="header-back" onclick="goTo('actions')">‹</span>
-    <div style="flex:1">
-      <div class="header-title">Détail action</div>
-      <div class="header-sub" id="view-action-id"></div>
+    <span class="header-back" onclick="goTo('actions')">â€¹</span>
+    <div class="header-brand">
+      <span class="header-brand-name">Détail action</span>
+      <span class="header-brand-sub" id="view-action-id"></span>
     </div>
   </div>
   <div class="content content-padded" id="view-action-content"></div>
@@ -302,10 +380,10 @@ select.form-input option{background:var(--surface);}
 <!-- SCREEN: EDIT ACTION -->
 <div class="screen" id="screen-edit-action">
   <div class="header">
-    <span class="header-back" onclick="goTo('actions')">‹</span>
-    <div style="flex:1">
-      <div class="header-title">Modifier l'action</div>
-      <div class="header-sub" id="edit-action-id"></div>
+    <span class="header-back" onclick="goTo('actions')">â€¹</span>
+    <div class="header-brand">
+      <span class="header-brand-name">Modifier l'action</span>
+      <span class="header-brand-sub" id="edit-action-id"></span>
     </div>
   </div>
   <div class="content content-padded">
@@ -392,10 +470,10 @@ select.form-input option{background:var(--surface);}
 <!-- SCREEN: ADD ACTION -->
 <div class="screen" id="screen-add-action">
   <div class="header">
-    <span class="header-back" onclick="goTo('actions')">‹</span>
-    <div style="flex:1">
-      <div class="header-title">Nouvelle action</div>
-      <div class="header-sub" id="add-obs-sub"></div>
+    <span class="header-back" onclick="goTo('actions')">â€¹</span>
+    <div class="header-brand">
+      <span class="header-brand-name">Nouvelle action</span>
+      <span class="header-brand-sub" id="add-obs-sub"></span>
     </div>
   </div>
   <div class="content content-padded">
@@ -449,7 +527,7 @@ select.form-input option{background:var(--surface);}
 
     <div class="form-group">
       <label>Unité</label>
-      <input type="text" id="add-unit" class="form-input" placeholder="pc, m², h…">
+      <input type="text" id="add-unit" class="form-input" placeholder="pc, mÂ², h…">
     </div>
 
     <div class="form-group">
@@ -599,7 +677,7 @@ async function sbFetch(table, select='*', limit=10000) {
   if (contentRange) {
     const total = parseInt(contentRange.split('/')[1]);
     if (!isNaN(total) && total > limit)
-      console.warn(`⚠️ sbFetch [${table}]: ${total} lignes en base, seulement ${limit} chargées.`);
+      console.warn(`âš ï¸ sbFetch [${table}]: ${total} lignes en base, seulement ${limit} chargées.`);
   }
   return data;
 }
@@ -668,7 +746,7 @@ async function doLogin() {
   const err = document.getElementById('login-error');
   const btn = document.getElementById('login-btn');
   if (!email || !password) { err.style.display='block'; err.textContent='Remplissez tous les champs.'; return; }
-  btn.textContent = '⏳ Connexion…'; btn.disabled = true;
+  btn.textContent = 'â³ Connexion…'; btn.disabled = true;
   try {
     const session = await signIn(email, password);
     supabaseSession = session;
@@ -689,7 +767,7 @@ async function doLogin() {
       role: profile.role || 'client'
     };
     err.style.display='none';
-    document.getElementById('header-user').textContent = currentUser.name + ' · ' + (currentUser.role === 'admin' ? '' : currentUser.role === 'contributeur' ? '' : '👁');
+    document.getElementById('header-user').textContent = currentUser.name + ' Â· ' + (currentUser.role === 'admin' ? '' : currentUser.role === 'contributeur' ? '' : 'ðŸ‘');
     await loadData();
     if (_autoRefreshTimer) clearInterval(_autoRefreshTimer);
     _autoRefreshTimer = setInterval(refreshData, 10 * 60 * 1000);
@@ -699,8 +777,9 @@ async function doLogin() {
       if (active?.id === 'screen-add-action') saveDraft('add');
     }, 30000);
     goTo('batiments');
+    updateHamburgerUser();
   } catch(e) {
-    err.style.display='block'; err.textContent='❌ ' + (e.message || 'Erreur de connexion.');
+    err.style.display='block'; err.textContent='âŒ ' + (e.message || 'Erreur de connexion.');
     btn.textContent='Se connecter'; btn.disabled=false;
   }
 }
@@ -744,7 +823,7 @@ async function loadData() {
       'Quantité': String(o.quantite||''), 'Unité': o.unite||''
     }));
     // NOTE : champs renommés en clés françaises pour cohérence avec le desktop.
-    // Si tu ajoutes une colonne Supabase, pense à l'ajouter ici.
+    // Si tu ajoutes une colonne Supabase, pense Ã  l'ajouter ici.
     DB.actions = acts.map(a => ({
       'ID_Action': a.id_action, 'ID_Observation': a.id_observation,
       'Num_Action': String(a.num_action||''), 'Description': a.description||'',
@@ -760,9 +839,11 @@ async function loadData() {
       'photo_comment_2': a.photo_comment_2||'',
       'photo_comment_3': a.photo_comment_3||'',
     }));
+    updateStatsBar();
+    updateHamburgerUser();
   } catch(e) {
     const el = document.getElementById('list-batiments');
-    if (el) el.innerHTML = `<div class="loading"><span style="color:var(--red)">⚠️ Erreur chargement : ${e.message}</span></div>`;
+    if (el) el.innerHTML = `<div class="loading"><span style="color:var(--red)">âš ï¸ Erreur chargement : ${e.message}</span></div>`;
     throw e;
   }
 }
@@ -859,14 +940,14 @@ function renderBatiments(filter='') {
       <div class="nen-dot" style="background:${nenBg(b['État bâtiment'])};color:${nenFg(b['État bâtiment'])}">${b['État bâtiment']||'?'}</div>
       <div class="card-content">
         <div class="card-title">${b['Nom']||b['ID_Batiment']}</div>
-        <div class="card-sub">${b['Lieu']} · ${b['Code objet']}</div>
+        <div class="card-sub">${b['Lieu']} Â· ${b['Code objet']}</div>
         <div class="card-meta">
           <span class="badge" style="background:var(--border);color:var(--muted)">${obs.length} obs</span>
           ${actCount>0?`<span class="badge flag-action"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> ${actCount}</span>`:'<span class="badge flag-noaction">0</span>'}
-          <span class="badge" style="background:${nenBg(epR)}33;color:${nenBg(epR)}">→ ${epR}</span>
+          <span class="badge" style="background:${nenBg(epR)}33;color:${nenBg(epR)}">â†’ ${epR}</span>
         </div>
       </div>
-      <span class="chevron">›</span>
+      <span class="chevron">â€º</span>
     </div>`;
   }).join('');
 }
@@ -919,7 +1000,7 @@ function renderObservations() {
   el.innerHTML = obs.map(o => {
     const acts = getActions(o['ID_Observation']);
     const ep = calcEtatProjete(o);
-    const arrow = ep < parseFloat(o['État']) ? '↓' : ep > parseFloat(o['État']) ? '↑' : '=';
+    const arrow = ep < parseFloat(o['État']) ? 'â†“' : ep > parseFloat(o['État']) ? 'â†‘' : '=';
     const qTotal = parseFloat(o['Quantité']) || 0;
     const qReal = acts.reduce((s, a) => s + (parseFloat(a['Quantite_realisee']) || 0), 0);
     const pct = qTotal && qReal ? Math.round((qReal / qTotal) * 100) : null;
@@ -928,14 +1009,14 @@ function renderObservations() {
       <div class="nen-dot" style="background:${nenBg(o['État'])};color:${nenFg(o['État'])};width:36px;height:36px;font-size:13px">${o['État']}</div>
       <div class="card-content">
         <div class="card-title">${o['Élément']||o['ID_Observation']}</div>
-        <div class="card-sub">${o['Procédure']} · P${o['Priorité']}</div>
+        <div class="card-sub">${o['Procédure']} Â· P${o['Priorité']}</div>
         <div class="card-meta">
           <span class="badge" style="background:${nenBg(ep)}33;color:${nenBg(ep)}">${ep} ${arrow}</span>
           ${acts.length>0?`<span class="badge flag-action"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> ${acts.length}</span>`:'<span class="badge flag-noaction">0</span>'}
           ${pct !== null ? `<span class="badge" style="background:${pctCol}22;color:${pctCol};gap:5px;display:inline-flex;align-items:center"><div style="width:28px;height:4px;background:${pctCol}33;border-radius:2px;overflow:hidden"><div style="height:100%;width:${Math.min(pct,100)}%;background:${pctCol};border-radius:2px"></div></div>${pct}%</span>` : ''}
         </div>
       </div>
-      <span class="chevron">›</span>
+      <span class="chevron">â€º</span>
     </div>`;
   }).join('');
 }
@@ -949,12 +1030,12 @@ function selectObs(id) {
 function renderActions() {
   if (!selectedObs) return;
   document.getElementById('act-obs-title').textContent = selectedObs['Élément']||selectedObs['ID_Observation'];
-  document.getElementById('act-obs-sub').textContent = selectedObs['NL/SfB']+' · '+selectedObs['ID_Observation'];
+  document.getElementById('act-obs-sub').textContent = selectedObs['NL/SfB']+' Â· '+selectedObs['ID_Observation'];
   const fab = document.getElementById('fab-add');
   fab.style.display = isContrib() ? 'flex' : 'none';
   const acts = getActions(selectedObs['ID_Observation']);
   const ep = calcEtatProjete(selectedObs);
-  const arrow = ep < parseFloat(selectedObs['État']) ? '↓ Amélioration' : ep > parseFloat(selectedObs['État']) ? '↑ Dégradation' : '= Stable';
+  const arrow = ep < parseFloat(selectedObs['État']) ? 'â†“ Amélioration' : ep > parseFloat(selectedObs['État']) ? 'â†‘ Dégradation' : '= Stable';
   const arrowColor = ep < parseFloat(selectedObs['État']) ? 'var(--green)' : ep > parseFloat(selectedObs['État']) ? 'var(--red)' : 'var(--muted)';
   const el = document.getElementById('list-actions');
   el.innerHTML = `
@@ -973,7 +1054,7 @@ function renderActions() {
       acts.map(a => `
         <div class="action-card">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <span style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">${a['ID_Action']} · #${a['Num_Action']}</span>
+            <span style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">${a['ID_Action']} Â· #${a['Num_Action']}</span>
             <span class="badge ${a['OK_NOK']?.toLowerCase()==='ok'?'ok-badge':a['OK_NOK']?.toLowerCase()==='nok'?'nok-badge':''}">${a['OK_NOK']||'—'}</span>
           </div>
           ${a['Description']?`<div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px">${a['Description']}</div>`:''}
@@ -1029,12 +1110,12 @@ function renderAddAction() {
   if (restored) {
     const banner = document.getElementById('add-success');
     banner.style.display = 'block';
-    banner.textContent = '📋 Brouillon restauré — dernière saisie récupérée.';
+    banner.textContent = 'ðŸ“‹ Brouillon restauré — dernière saisie récupérée.';
     setTimeout(() => { banner.style.display = 'none'; }, 3000);
   }
 }
 
-// ===== SYSTÈME MULTI-PHOTOS =====
+// ===== SYSTÃˆME MULTI-PHOTOS =====
 
 function getWatermarkInfo(mode) {
   const bat = selectedBat ? (selectedBat['Nom'] || selectedBat['ID_Batiment']) : '—';
@@ -1062,7 +1143,7 @@ function applyWatermark(canvas, ctx, comment, info) {
   const fs2 = Math.max(10, Math.round(barH * 0.24));
   ctx.font = `${fs2}px Arial`;
   ctx.fillStyle = '#ffffff';
-  ctx.fillText(info.obs + '  •  ' + info.date, 10, h - barH + fs1 + fs2 + 8, w - 20);
+  ctx.fillText(info.obs + '  â€¢  ' + info.date, 10, h - barH + fs1 + fs2 + 8, w - 20);
   // L3 — descriptif photo (gris clair, italique)
   if (comment) {
     const fs3 = Math.max(9, Math.round(barH * 0.21));
@@ -1108,10 +1189,10 @@ function refreshWatermark(mode, index) {
   const comment = slot.comment || '';
   const info = getWatermarkInfo(mode);
 
-  // Si on a les données canvas en mémoire → recalcul direct
+  // Si on a les données canvas en mémoire â†’ recalcul direct
   if (slot.canvas_data) {
     const { img, w, h } = slot.canvas_data;
-    // Mettre à jour info avec la date courante
+    // Mettre Ã  jour info avec la date courante
     slot.canvas_data.info = info;
     const canvas = document.createElement('canvas');
     canvas.width = w; canvas.height = h;
@@ -1126,14 +1207,14 @@ function refreshWatermark(mode, index) {
     return;
   }
 
-  // Photo existante depuis URL → charger l'image d'abord
+  // Photo existante depuis URL â†’ charger l'image d'abord
   const src = slot.existingUrl;
   if (!src) return;
   const img = new Image();
   img.crossOrigin = 'anonymous';
   img.onerror = () => {
     const preview = document.getElementById(`photo-preview-${mode}-${index}`);
-    if (preview) { preview.alt = '⚠️ Impossible de charger la photo (CORS)'; preview.style.opacity = '0.3'; }
+    if (preview) { preview.alt = 'âš ï¸ Impossible de charger la photo (CORS)'; preview.style.opacity = '0.3'; }
   };
   img.onload = () => {
     const MAX = 1200;
@@ -1220,7 +1301,7 @@ async function openInAppCamera(mode, index) {
   overlay.innerHTML = `
     <video id="cam-video" autoplay playsinline muted style="flex:1;object-fit:cover;width:100%;min-height:0;"></video>
     <div style="background:#111;padding:16px 20px 32px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
-      <button onclick="closeCameraOverlay(true)" style="width:52px;height:52px;background:#2a2a3a;border:none;border-radius:50%;color:#e8e6f0;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+      <button onclick="closeCameraOverlay(true)" style="width:52px;height:52px;background:#2a2a3a;border:none;border-radius:50%;color:#e8e6f0;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;">âœ•</button>
       <button onclick="captureFromCamera()" style="width:72px;height:72px;background:transparent;border:4px solid #fff;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;">
         <div style="width:58px;height:58px;background:#f49634;border-radius:50%;"></div>
       </button>
@@ -1310,12 +1391,12 @@ function renderPhotoSlots(mode) {
           <button onclick="removePhotoSlot('${mode}',${i})" style="padding:4px 10px;background:#2e1a1a;border:1px solid #4a2a2a;border-radius:6px;color:var(--red);font-size:12px;cursor:pointer;font-family:'Inter',sans-serif"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
         </div>
       </div>
-      ${src ? `<img id="photo-preview-${mode}-${i}" src="${src}" style="width:100%;border-radius:8px;max-height:180px;object-fit:cover;margin-bottom:8px" onclick="openLightbox('${src}')">` : `<div style="height:80px;background:var(--surface);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;margin-bottom:8px">⏳ En attente</div>`}
+      ${src ? `<img id="photo-preview-${mode}-${i}" src="${src}" style="width:100%;border-radius:8px;max-height:180px;object-fit:cover;margin-bottom:8px" onclick="openLightbox('${src}')">` : `<div style="height:80px;background:var(--surface);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;margin-bottom:8px">â³ En attente</div>`}
       <input type="text" placeholder="Commentaire photo (watermark)…"
         value="${slot.comment || ''}"
         oninput="photos['${mode}'][${i}].comment=this.value;refreshWatermark('${mode}',${i})"
         style="width:100%;padding:9px 12px;background:var(--surface);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none">
-      ${hasBlob ? `<div style="font-size:11px;color:var(--muted);margin-top:6px">WebP · ${Math.round(slot.blob.size/1024)} KB · q${Math.round((slot.quality||0.75)*100)}%</div>` : ''}
+      ${hasBlob ? `<div style="font-size:11px;color:var(--muted);margin-top:6px">WebP Â· ${Math.round(slot.blob.size/1024)} KB Â· q${Math.round((slot.quality||0.75)*100)}%</div>` : ''}
     </div>`;
   }).join('');
 
@@ -1364,7 +1445,7 @@ async function saveAction() {
     saveDraft('add');
     document.getElementById('add-error').style.display = 'block';
     document.getElementById('add-error').textContent =
-      '⚠️ Hors ligne — brouillon sauvegardé. Réessayez une fois connecté.';
+      'âš ï¸ Hors ligne — brouillon sauvegardé. Réessayez une fois connecté.';
     return;
   }
   clearDraft();
@@ -1378,10 +1459,10 @@ async function saveAction() {
   const photoUrls = [null, null, null];
   const photoComments = ['', '', ''];
 
-  // Upload jusqu'à 3 photos
+  // Upload jusqu'Ã  3 photos
   const slots = photos.add.filter(s => s.blob);
   if (slots.length > 0) {
-    success.style.display='block'; success.textContent=`⏳ Upload des photos (0/${slots.length})…`;
+    success.style.display='block'; success.textContent=`â³ Upload des photos (0/${slots.length})…`;
     for (let i = 0; i < Math.min(slots.length, 3); i++) {
       const slot = slots[i];
       const filename = `${selectedObs['ID_Observation']}_${nextId}_${i+1}.webp`;
@@ -1389,9 +1470,9 @@ async function saveAction() {
       if (url) {
         photoUrls[i] = url;
         photoComments[i] = slot.comment || '';
-        success.textContent = `⏳ Upload des photos (${i+1}/${slots.length})…`;
+        success.textContent = `â³ Upload des photos (${i+1}/${slots.length})…`;
       } else {
-        error.style.display='block'; error.textContent=`⚠️ Erreur upload photo ${i+1}.`;
+        error.style.display='block'; error.textContent=`âš ï¸ Erreur upload photo ${i+1}.`;
       }
     }
   }
@@ -1422,7 +1503,7 @@ async function saveAction() {
     action.photo_comment_3 = photoComments[2] || null;
   }
 
-  success.style.display='block'; success.textContent='⏳ Sauvegarde…';
+  success.style.display='block'; success.textContent='â³ Sauvegarde…';
 
   // Tentative avec champs multi-photos, fallback sans si colonnes absentes
   let ok = await sbInsert('action', action);
@@ -1446,12 +1527,12 @@ async function saveAction() {
       'photo_comment_1': photoComments[0]||'', 'photo_comment_2': photoComments[1]||'',
       'photo_comment_3': photoComments[2]||'',
     });
-    success.textContent = '✓ Action enregistrée avec succès !';
+    success.textContent = 'âœ“ Action enregistrée avec succès !';
     if (backBtn) backBtn.style.pointerEvents = '';
     setTimeout(() => goTo('actions'), 1500);
   } else {
     success.style.display='none';
-    error.style.display='block'; error.textContent='❌ Erreur de sauvegarde. Réessayez.';
+    error.style.display='block'; error.textContent='âŒ Erreur de sauvegarde. Réessayez.';
     if (backBtn) backBtn.style.pointerEvents = '';
   }
 }
@@ -1506,7 +1587,7 @@ async function shareAction(actionId) {
     `NEN2767 AMAYFA — ${bat}\n` +
     `Observation : ${obs}\n` +
     `Action #${a['Num_Action']} — ${a['Description'] || '—'}\n` +
-    `Date : ${a['Date'] || '—'} · État estimé : ${a['Etat_estime'] || '—'} · ${a['OK_NOK'] || '—'}` +
+    `Date : ${a['Date'] || '—'} Â· État estimé : ${a['Etat_estime'] || '—'} Â· ${a['OK_NOK'] || '—'}` +
     (a['WO']        ? `\nWO : ${a['WO']}`               : '') +
     (a['Remarques'] ? `\nRemarques : ${a['Remarques']}`  : '');
 
@@ -1524,7 +1605,7 @@ async function shareAction(actionId) {
     try {
       await navigator.clipboard.writeText(text);
       const tmp = document.createElement('div');
-      tmp.textContent = '✓ Résumé copié dans le presse-papier';
+      tmp.textContent = 'âœ“ Résumé copié dans le presse-papier';
       tmp.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a2e1a;color:#22c55e;border:1px solid #2a4a2a;border-radius:8px;padding:10px 16px;font-size:13px;font-weight:500;z-index:999;white-space:nowrap';
       document.body.appendChild(tmp);
       setTimeout(() => tmp.remove(), 2500);
@@ -1562,7 +1643,7 @@ function openEditAction(actionId) {
 function openViewAction(actionId) {
   const a = DB.actions.find(x => x['ID_Action'] === actionId);
   if (!a) return;
-  document.getElementById('view-action-id').textContent = actionId + ' · #' + (a['Num_Action'] || '');
+  document.getElementById('view-action-id').textContent = actionId + ' Â· #' + (a['Num_Action'] || '');
   const qObs = parseFloat(selectedObs ? selectedObs['Quantité'] : 0) || 0;
   const qReal = parseFloat(a['Quantite_realisee']) || 0;
   const pct = qObs && qReal ? Math.round((qReal / qObs) * 100) : null;
@@ -1603,7 +1684,7 @@ async function saveEditAction() {
   if (!navigator.onLine) {
     document.getElementById('edit-error').style.display = 'block';
     document.getElementById('edit-error').textContent =
-      '⚠️ Hors ligne — brouillon sauvegardé. Réessayez une fois connecté.';
+      'âš ï¸ Hors ligne — brouillon sauvegardé. Réessayez une fois connecté.';
     return;
   }
   const success = document.getElementById('edit-success');
@@ -1630,7 +1711,7 @@ async function saveEditAction() {
   // Uploader les nouvelles photos (blobs) et conserver les existingUrl
   const slots = photos.edit;
   if (slots.some(s => s.blob)) {
-    success.style.display = 'block'; success.textContent = '⏳ Upload des photos…';
+    success.style.display = 'block'; success.textContent = 'â³ Upload des photos…';
   }
   for (let i = 0; i < Math.min(slots.length, 3); i++) {
     const slot = slots[i];
@@ -1638,7 +1719,7 @@ async function saveEditAction() {
       const filename = `${selectedObs['ID_Observation']}_${currentEditActionId}_${i+1}_${Date.now()}.webp`;
       const url = await uploadPhoto(slot.blob, filename);
       if (url) { photoUrls[i] = url; photoComments[i] = slot.comment || ''; }
-      else { error.style.display='block'; error.textContent=`⚠️ Erreur upload photo ${i+1}.`; }
+      else { error.style.display='block'; error.textContent=`âš ï¸ Erreur upload photo ${i+1}.`; }
     } else if (slot.existingUrl) {
       photoUrls[i] = slot.existingUrl;
       photoComments[i] = slot.comment || '';
@@ -1675,7 +1756,7 @@ async function saveEditAction() {
     data.photo_comment_3 = photoComments[2] || null;
   }
 
-  success.style.display = 'block'; success.textContent = '⏳ Sauvegarde…';
+  success.style.display = 'block'; success.textContent = 'â³ Sauvegarde…';
 
   // Tentative avec champs multi-photos, fallback sans si erreur colonne
   let ok = await sbUpdate('action', 'id_action', currentEditActionId, data);
@@ -1705,12 +1786,12 @@ async function saveEditAction() {
     a['photo_comment_1'] = photoComments[0] || '';
     a['photo_comment_2'] = photoComments[1] || '';
     a['photo_comment_3'] = photoComments[2] || '';
-    success.textContent = '✓ Action modifiée avec succès !';
+    success.textContent = 'âœ“ Action modifiée avec succès !';
     if (backBtn) backBtn.style.pointerEvents = '';
     setTimeout(() => goTo('actions'), 1500);
   } else {
     success.style.display = 'none';
-    error.style.display = 'block'; error.textContent = '❌ Erreur de sauvegarde.';
+    error.style.display = 'block'; error.textContent = 'âŒ Erreur de sauvegarde.';
     if (backBtn) backBtn.style.pointerEvents = '';
   }
 }
@@ -1835,6 +1916,32 @@ _supabasePingTimer = setInterval(checkSupabaseConnection, 30000);
 
 
 
+
+function toggleHamburger() {
+  const menu = document.getElementById('hamburger-menu');
+  menu.classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  const menu = document.getElementById('hamburger-menu');
+  const btn = document.getElementById('btn-hamburger');
+  if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+    menu.classList.remove('open');
+  }
+});
+function updateStatsBar() {
+  const sb = document.getElementById('sb-bats');
+  const so = document.getElementById('sb-obs');
+  const sa = document.getElementById('sb-acts');
+  if (sb) sb.textContent = DB.batiments.length;
+  if (so) so.textContent = DB.observations.length;
+  if (sa) sa.textContent = DB.actions.length;
+}
+function updateHamburgerUser() {
+  const eu = document.getElementById('hm-user-email');
+  const er = document.getElementById('hm-user-role');
+  if (eu && currentUser) eu.textContent = currentUser.email || '—';
+  if (er && currentUser) er.textContent = currentUser.role || '—';
+}
 </script>
 <!-- APP INFO BOTTOM SHEET -->
 <div id="app-info-overlay" onclick="if(event.target===this)closeAppInfo()" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;align-items:flex-end;justify-content:center">
@@ -1848,7 +1955,7 @@ _supabasePingTimer = setInterval(checkSupabaseConnection, 30000);
       </div>
       <div>
         <div style="font-size:16px;font-weight:800">NEN 2767 <span style="color:#f49634">AMAYFA</span></div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px">Camp Adjudant Brasseur · ELU Service For You</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">Camp Adjudant Brasseur Â· ELU Service For You</div>
       </div>
     </div>
 
@@ -1860,7 +1967,7 @@ _supabasePingTimer = setInterval(checkSupabaseConnection, 30000);
       </div>
       <div style="flex:1;background:var(--bg);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)">
         <div style="font-size:14px;font-weight:700;color:var(--text)">Mai 2026</div>
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:3px">Mise à jour</div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:3px">Mise Ã  jour</div>
       </div>
     </div>
 
@@ -1868,23 +1975,23 @@ _supabasePingTimer = setInterval(checkSupabaseConnection, 30000);
     <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">Nouveautés v2.2</div>
     <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:20px">
       <div style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
-        <span style="color:#22c55e;font-size:14px;flex-shrink:0;margin-top:1px">✓</span>
-        <div><div style="font-size:13px;font-weight:500">Multi-photos (3 max)</div><div style="font-size:11px;color:var(--muted);margin-top:1px">Galerie ou caméra · jusqu'à 3 photos par action</div></div>
+        <span style="color:#22c55e;font-size:14px;flex-shrink:0;margin-top:1px">âœ“</span>
+        <div><div style="font-size:13px;font-weight:500">Multi-photos (3 max)</div><div style="font-size:11px;color:var(--muted);margin-top:1px">Galerie ou caméra Â· jusqu'Ã  3 photos par action</div></div>
       </div>
       <div style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
-        <span style="color:#22c55e;font-size:14px;flex-shrink:0;margin-top:1px">✓</span>
-        <div><div style="font-size:13px;font-weight:500">Watermark automatique</div><div style="font-size:11px;color:var(--muted);margin-top:1px">Bâtiment · élément · date · commentaire gravé sur chaque photo</div></div>
+        <span style="color:#22c55e;font-size:14px;flex-shrink:0;margin-top:1px">âœ“</span>
+        <div><div style="font-size:13px;font-weight:500">Watermark automatique</div><div style="font-size:11px;color:var(--muted);margin-top:1px">Bâtiment Â· élément Â· date Â· commentaire gravé sur chaque photo</div></div>
       </div>
       <div style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
-        <span style="color:#22c55e;font-size:14px;flex-shrink:0;margin-top:1px">✓</span>
-        <div><div style="font-size:13px;font-weight:500">Commentaire photo en temps réel</div><div style="font-size:11px;color:var(--muted);margin-top:1px">Saisie après upload · watermark mis à jour immédiatement</div></div>
+        <span style="color:#22c55e;font-size:14px;flex-shrink:0;margin-top:1px">âœ“</span>
+        <div><div style="font-size:13px;font-weight:500">Commentaire photo en temps réel</div><div style="font-size:11px;color:var(--muted);margin-top:1px">Saisie après upload Â· watermark mis Ã  jour immédiatement</div></div>
       </div>
       <div style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
-        <span style="color:#22c55e;font-size:14px;flex-shrink:0;margin-top:1px">✓</span>
+        <span style="color:#22c55e;font-size:14px;flex-shrink:0;margin-top:1px">âœ“</span>
         <div><div style="font-size:13px;font-weight:500">Icônes SVG monochromes orange</div><div style="font-size:11px;color:var(--muted);margin-top:1px">Tous les emojis colorés remplacés dans les boutons</div></div>
       </div>
       <div style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
-        <span style="color:#22c55e;font-size:14px;flex-shrink:0;margin-top:1px">✓</span>
+        <span style="color:#22c55e;font-size:14px;flex-shrink:0;margin-top:1px">âœ“</span>
         <div><div style="font-size:13px;font-weight:500">Enregistrement robuste</div><div style="font-size:11px;color:var(--muted);margin-top:1px">Fallback automatique si colonnes multi-photos absentes en base</div></div>
       </div>
     </div>
