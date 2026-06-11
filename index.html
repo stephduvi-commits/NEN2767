@@ -207,9 +207,12 @@ select option{background:var(--surface);}
 }
 [data-theme="light"] .topbar { background:#ffffff; }
 [data-theme="light"] .sidebar { background:#ffffff; }
+#supabase-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:1000;background:#7f1d1d;color:#fca5a5;padding:10px 16px;font-size:13px;font-weight:500;border-bottom:1px solid #991b1b;align-items:center;justify-content:center;gap:8px;}
+#supabase-banner.visible{display:flex;}
 </style>
 </head>
 <body>
+<div id="supabase-banner"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Connexion Supabase indisponible — Vérifiez votre connexion internet</div>
 
 <!-- LOGIN PAGE -->
 <div id="login-page">
@@ -3296,6 +3299,27 @@ async function exportFullXLS(){
     showXlsStatus(`❌ Erreur export XLS : ${e.message || e}`, 'error');
   }
 }
+
+// ===== SUPABASE PING =====
+let _supabasePingTimer = null;
+async function checkSupabaseConnection() {
+  const banner = document.getElementById('supabase-banner');
+  if (!banner) return;
+  try {
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 5000);
+    await fetch(`${SUPABASE_URL}/rest/v1/batiment?select=id&limit=1`, {
+      headers: { 'apikey': SUPABASE_KEY },
+      signal: controller.signal
+    });
+    clearTimeout(tid);
+    banner.classList.remove('visible');
+  } catch(_) {
+    banner.classList.add('visible');
+  }
+}
+checkSupabaseConnection();
+_supabasePingTimer = setInterval(checkSupabaseConnection, 30000);
 </script>
 </body>
 </html>
