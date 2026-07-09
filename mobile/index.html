@@ -814,7 +814,10 @@ function _activeScreen() {
 // la confirmation de sortie dans le gestionnaire popstate ci-dessous.
 function _armExitGuard() {
   if (!(history.state && history.state.guard)) {
-    history.pushState({ screen: MAIN_SCREEN, guard: true }, '');
+    // L'URL (fragment #...) doit changer à chaque entrée : sur Android, Chrome
+    // ferme directement une PWA installée si l'URL courante == start_url, sans
+    // même consulter la pile d'historique JS.
+    history.pushState({ screen: MAIN_SCREEN, guard: true }, '', '#' + MAIN_SCREEN + '-exit');
   }
 }
 
@@ -841,10 +844,13 @@ function goTo(screen, _fromPopstate) {
   if (!_fromPopstate) {
     // Connexion/déconnexion : on remplace l'entrée courante pour ne pas pouvoir
     // revenir avec "retour" sur l'écran de login une fois authentifié.
+    // L'URL (fragment #écran) doit changer à chaque appel : sur Android, Chrome
+    // ferme directement une PWA installée si l'URL courante == start_url, sans
+    // même consulter la pile d'historique JS.
     if (screen === 'login' || (screen === MAIN_SCREEN && current === 'login')) {
-      history.replaceState({ screen }, '');
+      history.replaceState({ screen }, '', '#' + screen);
     } else {
-      history.pushState({ screen }, '');
+      history.pushState({ screen }, '', '#' + screen);
     }
   }
 
@@ -875,7 +881,7 @@ window.addEventListener('popstate', (e) => {
   // on laisse le comportement par défaut du navigateur/webview s'appliquer.
 });
 
-history.replaceState({ screen: 'login' }, '');
+history.replaceState({ screen: 'login' }, '', '#login');
 
 // ===== HELPERS =====
 function nenBg(n) {
