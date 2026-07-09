@@ -924,14 +924,22 @@ function _showExitConfirm(onYes, onNo) {
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99998;display:flex;align-items:center;justify-content:center;padding:20px';
   overlay.innerHTML = `
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px 20px;width:100%;max-width:340px;text-align:center">
-      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:20px">Voulez-vous quitter l'application ?</div>
-      <div style="display:flex;gap:10px">
+      <div id="_exit-text" style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:20px">Voulez-vous quitter l'application ?</div>
+      <div id="_exit-actions" style="display:flex;gap:10px">
         <button id="_exit-no" style="flex:1;padding:12px;border-radius:10px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Annuler</button>
         <button id="_exit-yes" style="flex:1;padding:12px;border-radius:10px;border:none;background:var(--red);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Quitter</button>
       </div>
     </div>`;
   document.body.appendChild(overlay);
-  document.getElementById('_exit-yes').onclick = () => { overlay.remove(); onYes(); };
+  document.getElementById('_exit-yes').onclick = () => {
+    // Aucune API web ne permet de fermer à coup sûr une PWA installée : on
+    // prévient l'utilisateur qu'un second appui sur retour est nécessaire,
+    // au lieu de simplement faire disparaître la popup sans explication.
+    document.getElementById('_exit-text').textContent = 'Appuyez à nouveau sur retour pour fermer l\'application.';
+    document.getElementById('_exit-actions').remove();
+    onYes();
+    setTimeout(() => overlay.remove(), 3000);
+  };
   document.getElementById('_exit-no').onclick = () => { overlay.remove(); onNo(); };
 }
 
