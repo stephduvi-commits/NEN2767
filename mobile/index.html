@@ -42,7 +42,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .search-input::placeholder{color:var(--muted);}
 
 /* CARDS */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;cursor:pointer;active:background:#1a1a28;transition:background 0.1s;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:background 0.1s;}
 .card:active{background:#1a1a28;}
 .card-content{flex:1;min-width:0;}
 .card-title{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -792,7 +792,32 @@ async function refreshData() {
 }
 
 // ===== NAVIGATION =====
-function goTo(screen) {
+// Hiérarchie des écrans, utilisée pour que le bouton "retour" matériel
+// (Android/PWA) navigue dans l'app au lieu de la fermer.
+const SCREEN_PARENT = {
+  'observations': 'batiments',
+  'actions': 'observations',
+  'view-action': 'actions',
+  'edit-action': 'actions',
+  'add-action': 'actions'
+};
+
+function _activeScreen() {
+  const el = document.querySelector('.screen.active');
+  return el ? el.id.replace('screen-', '') : null;
+}
+
+function goTo(screen, _fromPopstate) {
+  const current = _activeScreen();
+
+  // Navigation vers l'écran parent (bouton ‹, "Annuler", retour après sauvegarde…) :
+  // on dépile l'historique au lieu d'empiler, pour que le bouton retour matériel
+  // reste synchronisé avec l'écran affiché.
+  if (!_fromPopstate && current && SCREEN_PARENT[current] === screen) {
+    history.back();
+    return;
+  }
+
   if (screen === 'actions') clearDraft();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + screen).classList.add('active');
@@ -801,7 +826,26 @@ function goTo(screen) {
   if (screen === 'actions') renderActions();
   if (screen === 'add-action') renderAddAction();
   // edit-action : pas de render car openEditAction s'en charge
+
+  if (!_fromPopstate) {
+    // Connexion/déconnexion : on remplace l'entrée courante pour ne pas pouvoir
+    // revenir avec "retour" sur l'écran de login une fois authentifié.
+    if (screen === 'login' || (screen === 'batiments' && current === 'login')) {
+      history.replaceState({ screen }, '');
+    } else {
+      history.pushState({ screen }, '');
+    }
+  }
 }
+
+window.addEventListener('popstate', (e) => {
+  const screen = e.state && e.state.screen;
+  if (screen) goTo(screen, true);
+  // sinon (état racine atteint) : on laisse le comportement par défaut du
+  // navigateur/webview s'appliquer (fermeture de l'app depuis l'écran d'accueil).
+});
+
+history.replaceState({ screen: 'login' }, '');
 
 // ===== HELPERS =====
 function nenBg(n) {
