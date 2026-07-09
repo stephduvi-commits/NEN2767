@@ -955,19 +955,24 @@ window.addEventListener('popstate', (e) => {
   _dbg('POPSTATE state=' + JSON.stringify(state) + ' history.length=' + history.length + ' activeScreen=' + _activeScreen());
   if (state && state.screen) {
     // La garde de l'écran d'accueil vient d'être consommée : dernier niveau
-    // avant de quitter réellement l'application. On demande confirmation.
+    // avant de quitter réellement l'application.
     if (state.screen === MAIN_SCREEN && !state.guard && _activeScreen() === MAIN_SCREEN) {
+      // On réarme IMMÉDIATEMENT et de façon synchrone, dans le même tick que ce
+      // popstate — exactement comme au tout premier armement (qui, lui,
+      // fonctionne). Réarmer après coup (ex. dans le callback de confirm(),
+      // même différé) s'est avéré ne pas être pris en compte par Android/Chrome
+      // pour l'appui suivant sur retour (constaté via le journal de debug :
+      // aucun popstate ne se redéclenchait, l'app se fermait directement).
+      _dbg('-> plancher atteint : réarmement immédiat');
+      _armExitGuard();
       _dbg('-> confirmation de sortie');
       if (confirm('Voulez-vous quitter l\'application ?')) {
-        _dbg('-> confirmé OUI, history.back()');
-        history.back();
+        // On saute par-dessus la garde qu'on vient de reposer pour sortir
+        // réellement (2 crans en arrière : la garde puis le plancher).
+        _dbg('-> confirmé OUI, history.go(-2)');
+        history.go(-2);
       } else {
-        // Réarmer de façon synchrone, dans le même tick que le popstate, n'est
-        // pas fiable sur certains Android/Chrome : le pushState n'est alors pas
-        // pris en compte pour l'appui suivant sur retour (l'app se ferme direct
-        // sans même redéclencher popstate). On diffère donc d'un tick.
-        _dbg('-> confirmé NON, réarmement différé');
-        setTimeout(_armExitGuard, 50);
+        _dbg('-> confirmé NON, garde déjà réarmée');
       }
       return;
     }
