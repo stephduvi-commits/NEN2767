@@ -197,6 +197,13 @@ select.form-input option{background:var(--surface);}
     try { alert(text); } catch (_) {}
   });
   persist('BOOT: script erreur globale armé');
+  // Service worker : force une requête réseau fraîche à chaque ouverture au lieu
+  // de laisser Chrome servir indéfiniment une copie périmée de la PWA installée.
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+      .then(() => persist('SW: enregistré'))
+      .catch(err => persist('SW: échec enregistrement ' + err.message));
+  }
 })();
 </script>
 <div id="offline-banner">Hors ligne — les modifications ne seront pas sauvegardées</div>
