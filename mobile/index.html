@@ -172,6 +172,33 @@ select.form-input option{background:var(--surface);}
 </style>
 </head>
 <body>
+<script>
+// ===== DEBUG GLOBAL (temporaire) : capture toute erreur JS non gérée, où qu'elle
+// survienne dans la page, pour diagnostiquer pourquoi le bouton retour Android
+// ne semble intercepté par aucun code plus bas dans le script principal.
+(function () {
+  function persist(line) {
+    try {
+      var log = JSON.parse(localStorage.getItem('_navdebug') || '[]');
+      log.push(new Date().toISOString().slice(11, 23) + ' ' + line);
+      while (log.length > 300) log.shift();
+      localStorage.setItem('_navdebug', JSON.stringify(log));
+    } catch (_) {}
+  }
+  window.onerror = function (msg, src, line, col, err) {
+    var text = 'JSERROR: ' + msg + ' @' + line + ':' + col + (err && err.stack ? ' | ' + String(err.stack).slice(0, 400) : '');
+    persist(text);
+    try { alert(text); } catch (_) {}
+  };
+  window.addEventListener('unhandledrejection', function (e) {
+    var reason = e.reason && (e.reason.message || e.reason.toString) ? (e.reason.message || String(e.reason)) : String(e.reason);
+    var text = 'PROMISE REJECTION: ' + reason;
+    persist(text);
+    try { alert(text); } catch (_) {}
+  });
+  persist('BOOT: script erreur globale armé');
+})();
+</script>
 <div id="offline-banner">Hors ligne — les modifications ne seront pas sauvegardées</div>
 <div id="supabase-banner"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Connexion Supabase indisponible — Vérifiez votre connexion internet</div>
 
