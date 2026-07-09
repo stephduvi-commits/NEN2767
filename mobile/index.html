@@ -910,6 +910,28 @@ function _armExitGuard() {
   }
 }
 
+// Popup maison (au lieu de window.confirm()) : une boîte de dialogue native
+// Android introduit une transition/animation qui a désynchronisé Chrome de sa
+// propre pile d'historique le temps de son ouverture/fermeture (constaté via
+// le journal de debug : un second retour trop rapide après avoir fermé un
+// confirm() natif ne redéclenchait pas popstate). Un simple overlay DOM se
+// ferme instantanément, sans passer par le gestionnaire de fenêtres Android.
+function _showExitConfirm(onYes, onNo) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99998;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px 20px;width:100%;max-width:340px;text-align:center">
+      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:20px">Voulez-vous quitter l'application ?</div>
+      <div style="display:flex;gap:10px">
+        <button id="_exit-no" style="flex:1;padding:12px;border-radius:10px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Annuler</button>
+        <button id="_exit-yes" style="flex:1;padding:12px;border-radius:10px;border:none;background:var(--red);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Quitter</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  document.getElementById('_exit-yes').onclick = () => { overlay.remove(); onYes(); };
+  document.getElementById('_exit-no').onclick = () => { overlay.remove(); onNo(); };
+}
+
 function goTo(screen, _fromPopstate) {
   const current = _activeScreen();
   _dbg('goTo(' + screen + ', fromPopstate=' + !!_fromPopstate + ') current=' + current + ' history.length=' + history.length + ' history.state=' + JSON.stringify(history.state));
@@ -965,15 +987,16 @@ window.addEventListener('popstate', (e) => {
       // aucun popstate ne se redéclenchait, l'app se fermait directement).
       _dbg('-> plancher atteint : réarmement immédiat');
       _armExitGuard();
-      _dbg('-> confirmation de sortie');
-      if (confirm('Voulez-vous quitter l\'application ?')) {
-        // On saute par-dessus la garde qu'on vient de reposer pour sortir
-        // réellement (2 crans en arrière : la garde puis le plancher).
-        _dbg('-> confirmé OUI, history.go(-2)');
-        history.go(-2);
-      } else {
-        _dbg('-> confirmé NON, garde déjà réarmée');
-      }
+      _dbg('-> confirmation de sortie (popup maison)');
+      _showExitConfirm(
+        () => {
+          // On saute par-dessus la garde qu'on vient de reposer pour sortir
+          // réellement (2 crans en arrière : la garde puis le plancher).
+          _dbg('-> confirmé OUI, history.go(-2)');
+          history.go(-2);
+        },
+        () => { _dbg('-> confirmé NON, garde déjà réarmée'); }
+      );
       return;
     }
     // Filet de sécurité : si l'utilisateur n'est plus authentifié (déconnexion),
