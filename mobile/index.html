@@ -791,6 +791,58 @@ async function refreshData() {
   }
 }
 
+// ===== DEBUG NAVIGATION (temporaire) =====
+// Journal persisté (survit même si l'app est tuée par l'OS avant qu'on ait pu
+// lire le log) + petit panneau visible à l'écran pour diagnostiquer le bouton
+// retour sans accès à la console distante.
+function _dbg(msg) {
+  const line = new Date().toISOString().slice(11, 23) + ' ' + msg;
+  try {
+    const log = JSON.parse(localStorage.getItem('_navdebug') || '[]');
+    log.push(line);
+    while (log.length > 300) log.shift();
+    localStorage.setItem('_navdebug', JSON.stringify(log));
+  } catch (_) {}
+  const el = document.getElementById('_navdebug-panel');
+  if (el) {
+    const p = document.createElement('div');
+    p.textContent = line;
+    el.appendChild(p);
+    el.scrollTop = el.scrollHeight;
+  }
+}
+function _initDebugPanel() {
+  const panel = document.createElement('div');
+  panel.id = '_navdebug-panel';
+  panel.style.cssText = 'position:fixed;left:0;right:0;bottom:0;max-height:32vh;overflow-y:auto;background:rgba(0,0,0,.88);color:#0f0;font:9px/1.4 monospace;padding:6px 8px;z-index:99999;white-space:pre-wrap;word-break:break-all;';
+  const bar = document.createElement('div');
+  bar.style.cssText = 'display:flex;gap:8px;margin-bottom:4px;position:sticky;top:0;background:rgba(0,0,0,.88)';
+  const clearBtn = document.createElement('button');
+  clearBtn.textContent = 'Vider le journal';
+  clearBtn.style.cssText = 'font-size:9px;padding:3px 6px';
+  clearBtn.onclick = () => { localStorage.removeItem('_navdebug'); panel.innerHTML = ''; panel.appendChild(bar); };
+  bar.appendChild(clearBtn);
+  panel.appendChild(bar);
+  document.body.appendChild(panel);
+  let prev = [];
+  try { prev = JSON.parse(localStorage.getItem('_navdebug') || '[]'); } catch (_) {}
+  if (prev.length) {
+    const marker = document.createElement('div');
+    marker.style.cssText = 'color:#f49634;font-weight:bold;margin:4px 0';
+    marker.textContent = '--- session précédente (' + prev.length + ' lignes) ---';
+    panel.appendChild(marker);
+    prev.forEach(l => { const p = document.createElement('div'); p.textContent = l; panel.appendChild(p); });
+    const marker2 = document.createElement('div');
+    marker2.style.cssText = 'color:#f49634;font-weight:bold;margin:4px 0';
+    marker2.textContent = '--- nouvelle session ---';
+    panel.appendChild(marker2);
+  }
+}
+_initDebugPanel();
+window.addEventListener('pagehide', (e) => _dbg('PAGEHIDE persisted=' + e.persisted));
+document.addEventListener('visibilitychange', () => _dbg('VISIBILITYCHANGE -> ' + document.visibilityState));
+window.addEventListener('beforeunload', () => _dbg('BEFOREUNLOAD'));
+
 // ===== NAVIGATION =====
 // Hiérarchie des écrans, utilisée pour que le bouton "retour" matériel
 // (Android/PWA) navigue dans l'app au lieu de la fermer.
@@ -818,16 +870,21 @@ function _armExitGuard() {
     // ferme directement une PWA installée si l'URL courante == start_url, sans
     // même consulter la pile d'historique JS.
     history.pushState({ screen: MAIN_SCREEN, guard: true }, '', '#' + MAIN_SCREEN + '-exit');
+    _dbg('armExitGuard: pushState guard, history.length=' + history.length);
+  } else {
+    _dbg('armExitGuard: déjà armée, history.length=' + history.length);
   }
 }
 
 function goTo(screen, _fromPopstate) {
   const current = _activeScreen();
+  _dbg('goTo(' + screen + ', fromPopstate=' + !!_fromPopstate + ') current=' + current + ' history.length=' + history.length + ' history.state=' + JSON.stringify(history.state));
 
   // Navigation vers l'écran parent (bouton ‹, "Annuler", retour après sauvegarde…) :
   // on dépile l'historique au lieu d'empiler, pour que le bouton retour matériel
   // reste synchronisé avec l'écran affiché.
   if (!_fromPopstate && current && SCREEN_PARENT[current] === screen) {
+    _dbg('-> history.back() (match parent ' + current + '->' + screen + ')');
     history.back();
     return;
   }
@@ -849,8 +906,10 @@ function goTo(screen, _fromPopstate) {
     // même consulter la pile d'historique JS.
     if (screen === 'login' || (screen === MAIN_SCREEN && current === 'login')) {
       history.replaceState({ screen }, '', '#' + screen);
+      _dbg('-> replaceState screen=' + screen + ' history.length=' + history.length);
     } else {
       history.pushState({ screen }, '', '#' + screen);
+      _dbg('-> pushState screen=' + screen + ' history.length=' + history.length);
     }
   }
 
@@ -859,13 +918,17 @@ function goTo(screen, _fromPopstate) {
 
 window.addEventListener('popstate', (e) => {
   const state = e.state;
+  _dbg('POPSTATE state=' + JSON.stringify(state) + ' history.length=' + history.length + ' activeScreen=' + _activeScreen());
   if (state && state.screen) {
     // La garde de l'écran d'accueil vient d'être consommée : dernier niveau
     // avant de quitter réellement l'application. On demande confirmation.
     if (state.screen === MAIN_SCREEN && !state.guard && _activeScreen() === MAIN_SCREEN) {
+      _dbg('-> confirmation de sortie');
       if (confirm('Voulez-vous quitter l\'application ?')) {
+        _dbg('-> confirmé OUI, history.back()');
         history.back();
       } else {
+        _dbg('-> confirmé NON, réarmement');
         _armExitGuard();
       }
       return;
@@ -874,14 +937,17 @@ window.addEventListener('popstate', (e) => {
     // une entrée d'historique d'avant la déconnexion ne doit jamais rouvrir un
     // écran protégé.
     const target = (state.screen !== 'login' && !currentUser) ? 'login' : state.screen;
+    if (target !== state.screen) _dbg('-> filet sécurité: redirigé vers ' + target + ' (currentUser=' + !!currentUser + ')');
     goTo(target, true);
     return;
   }
+  _dbg('-> state vide, plancher atteint (sortie non interceptée)');
   // sinon (plancher réel atteint, ne devrait plus arriver grâce à la garde) :
   // on laisse le comportement par défaut du navigateur/webview s'appliquer.
 });
 
 history.replaceState({ screen: 'login' }, '', '#login');
+_dbg('INIT replaceState login, history.length=' + history.length);
 
 // ===== HELPERS =====
 function nenBg(n) {
