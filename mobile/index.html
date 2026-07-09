@@ -962,8 +962,12 @@ window.addEventListener('popstate', (e) => {
         _dbg('-> confirmé OUI, history.back()');
         history.back();
       } else {
-        _dbg('-> confirmé NON, réarmement');
-        _armExitGuard();
+        // Réarmer de façon synchrone, dans le même tick que le popstate, n'est
+        // pas fiable sur certains Android/Chrome : le pushState n'est alors pas
+        // pris en compte pour l'appui suivant sur retour (l'app se ferme direct
+        // sans même redéclencher popstate). On diffère donc d'un tick.
+        _dbg('-> confirmé NON, réarmement différé');
+        setTimeout(_armExitGuard, 50);
       }
       return;
     }
