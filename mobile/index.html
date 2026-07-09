@@ -898,7 +898,10 @@ function _activeScreen() {
 // le premier retour depuis cet écran consomme la garde (sans rien quitter),
 // le suivant retombe sur l'entrée réelle de l'écran d'accueil, ce qui déclenche
 // la confirmation de sortie dans le gestionnaire popstate ci-dessous.
+let _appExiting = false; // vrai pendant la sortie confirmée par l'utilisateur
+
 function _armExitGuard() {
+  _appExiting = false;
   if (!(history.state && history.state.guard)) {
     // L'URL (fragment #...) doit changer à chaque entrée : sur Android, Chrome
     // ferme directement une PWA installée si l'URL courante == start_url, sans
@@ -974,7 +977,14 @@ function goTo(screen, _fromPopstate) {
 
 window.addEventListener('popstate', (e) => {
   const state = e.state;
-  _dbg('POPSTATE state=' + JSON.stringify(state) + ' history.length=' + history.length + ' activeScreen=' + _activeScreen());
+  _dbg('POPSTATE state=' + JSON.stringify(state) + ' history.length=' + history.length + ' activeScreen=' + _activeScreen() + ' appExiting=' + _appExiting);
+  if (_appExiting) {
+    // Sortie confirmée par l'utilisateur, en cours (voir _showExitConfirm) : on
+    // ne réarme plus rien et on ne réaffiche pas la popup, pour que le prochain
+    // retour matériel ferme réellement l'app.
+    _dbg('-> sortie en cours, on laisse faire');
+    return;
+  }
   if (state && state.screen) {
     // La garde de l'écran d'accueil vient d'être consommée : dernier niveau
     // avant de quitter réellement l'application.
@@ -990,10 +1000,17 @@ window.addEventListener('popstate', (e) => {
       _dbg('-> confirmation de sortie (popup maison)');
       _showExitConfirm(
         () => {
-          // On saute par-dessus la garde qu'on vient de reposer pour sortir
-          // réellement (2 crans en arrière : la garde puis le plancher).
-          _dbg('-> confirmé OUI, history.go(-2)');
-          history.go(-2);
+          // history.go(-2) (sauter la garde + le plancher) ne fonctionne pas :
+          // un appel programmatique qui dépasse la limite de l'historique est
+          // simplement ignoré par Chrome, contrairement à un vrai appui matériel
+          // sur retour qui, lui, ferme l'activité. On tente donc window.close()
+          // (fonctionne parfois pour une PWA installée), et en repli on
+          // désarme complètement le piège : le tout prochain retour matériel
+          // fermera réellement l'app, sans repasser par cette popup.
+          _dbg('-> confirmé OUI : _appExiting=true, tentative window.close()');
+          _appExiting = true;
+          try { window.close(); } catch (_) {}
+          history.back();
         },
         () => { _dbg('-> confirmé NON, garde déjà réarmée'); }
       );
