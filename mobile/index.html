@@ -801,10 +801,21 @@ const SCREEN_PARENT = {
   'edit-action': 'actions',
   'add-action': 'actions'
 };
+const MAIN_SCREEN = 'batiments'; // écran d'accueil : seul endroit où "retour" demande confirmation
 
 function _activeScreen() {
   const el = document.querySelector('.screen.active');
   return el ? el.id.replace('screen-', '') : null;
+}
+
+// Maintient une entrée d'historique "garde" au-dessus de l'écran d'accueil :
+// le premier retour depuis cet écran consomme la garde (sans rien quitter),
+// le suivant retombe sur l'entrée réelle de l'écran d'accueil, ce qui déclenche
+// la confirmation de sortie dans le gestionnaire popstate ci-dessous.
+function _armExitGuard() {
+  if (!(history.state && history.state.guard)) {
+    history.pushState({ screen: MAIN_SCREEN, guard: true }, '');
+  }
 }
 
 function goTo(screen, _fromPopstate) {
@@ -830,19 +841,38 @@ function goTo(screen, _fromPopstate) {
   if (!_fromPopstate) {
     // Connexion/déconnexion : on remplace l'entrée courante pour ne pas pouvoir
     // revenir avec "retour" sur l'écran de login une fois authentifié.
-    if (screen === 'login' || (screen === 'batiments' && current === 'login')) {
+    if (screen === 'login' || (screen === MAIN_SCREEN && current === 'login')) {
       history.replaceState({ screen }, '');
     } else {
       history.pushState({ screen }, '');
     }
   }
+
+  if (screen === MAIN_SCREEN) _armExitGuard();
 }
 
 window.addEventListener('popstate', (e) => {
-  const screen = e.state && e.state.screen;
-  if (screen) goTo(screen, true);
-  // sinon (état racine atteint) : on laisse le comportement par défaut du
-  // navigateur/webview s'appliquer (fermeture de l'app depuis l'écran d'accueil).
+  const state = e.state;
+  if (state && state.screen) {
+    // La garde de l'écran d'accueil vient d'être consommée : dernier niveau
+    // avant de quitter réellement l'application. On demande confirmation.
+    if (state.screen === MAIN_SCREEN && !state.guard && _activeScreen() === MAIN_SCREEN) {
+      if (confirm('Voulez-vous quitter l\'application ?')) {
+        history.back();
+      } else {
+        _armExitGuard();
+      }
+      return;
+    }
+    // Filet de sécurité : si l'utilisateur n'est plus authentifié (déconnexion),
+    // une entrée d'historique d'avant la déconnexion ne doit jamais rouvrir un
+    // écran protégé.
+    const target = (state.screen !== 'login' && !currentUser) ? 'login' : state.screen;
+    goTo(target, true);
+    return;
+  }
+  // sinon (plancher réel atteint, ne devrait plus arriver grâce à la garde) :
+  // on laisse le comportement par défaut du navigateur/webview s'appliquer.
 });
 
 history.replaceState({ screen: 'login' }, '');
