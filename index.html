@@ -400,11 +400,11 @@ select option{background:var(--surface);}
     <!-- Version + date -->
     <div style="display:flex;gap:10px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)">
       <div style="flex:1;background:var(--bg);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)">
-        <div style="font-size:22px;font-weight:800;color:var(--accent)">v2.2</div>
+        <div style="font-size:22px;font-weight:800;color:var(--accent)">v2.4</div>
         <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:3px">Version</div>
       </div>
       <div style="flex:1;background:var(--bg);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)">
-        <div style="font-size:14px;font-weight:700;color:var(--text)">Mai 2026</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text)">Août 2026</div>
         <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:3px">Mise à jour</div>
       </div>
       <div style="flex:1;background:var(--bg);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border)">
@@ -414,31 +414,19 @@ select option{background:var(--surface);}
     </div>
 
     <!-- Changelog -->
-    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">Nouveautés v2.2</div>
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">Nouveautés v2.4</div>
     <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:20px">
       <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
         <span style="color:#22c55e;font-weight:700;flex-shrink:0;margin-top:1px">✓</span>
-        <div><div style="font-size:12px;font-weight:600;color:var(--text)">Multi-photos (3 max) PC & Mobile</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Galerie + caméra · watermark bâtiment / élément / date / commentaire</div></div>
+        <div><div style="font-size:12px;font-weight:600;color:var(--text)">Sécurité des données renforcée</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Ajout/modification/suppression d'actions et gestion des comptes désormais contrôlés par rôle côté serveur</div></div>
       </div>
       <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
         <span style="color:#22c55e;font-weight:700;flex-shrink:0;margin-top:1px">✓</span>
-        <div><div style="font-size:12px;font-weight:600;color:var(--text)">Lightbox photos avec commentaires</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Clic sur miniature → affichage plein écran toutes photos côte à côte</div></div>
+        <div><div style="font-size:12px;font-weight:600;color:var(--text)">Fiabilité de l'ajout d'action</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Identifiant généré de façon plus robuste, avec nouvelle tentative automatique en cas de conflit</div></div>
       </div>
       <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
         <span style="color:#22c55e;font-weight:700;flex-shrink:0;margin-top:1px">✓</span>
-        <div><div style="font-size:12px;font-weight:600;color:var(--text)">Photos dans les PDF</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Rapports bâtiment et modifications du mois incluent les photos avec tag</div></div>
-      </div>
-      <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
-        <span style="color:#22c55e;font-weight:700;flex-shrink:0;margin-top:1px">✓</span>
-        <div><div style="font-size:12px;font-weight:600;color:var(--text)">Calendrier réparé</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Navigation mois/année fonctionnelle via variables globales</div></div>
-      </div>
-      <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
-        <span style="color:#22c55e;font-weight:700;flex-shrink:0;margin-top:1px">✓</span>
-        <div><div style="font-size:12px;font-weight:600;color:var(--text)">Icônes SVG monochromes orange</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Remplacement de tous les emojis colorés dans les boutons</div></div>
-      </div>
-      <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
-        <span style="color:#22c55e;font-weight:700;flex-shrink:0;margin-top:1px">✓</span>
-        <div><div style="font-size:12px;font-weight:600;color:var(--text)">PDF optimisés A4 portrait</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Marges et mise en page adaptées à l'impression</div></div>
+        <div><div style="font-size:12px;font-weight:600;color:var(--text)">Bandeau de connexion corrigé</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Le message "Connexion Supabase indisponible" ne s'affiche plus à tort</div></div>
       </div>
     </div>
 
