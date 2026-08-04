@@ -1,0 +1,131 @@
+SÉCURITÉ BASE DE DONNÉES (Supabase) — NOTES DE DÉCISION
+=========================================================
+Projet Supabase : NEN2767 (jingwuxekcihiiktsidy)
+Dernière mise à jour : 2026-08-04
+
+Ce fichier documente les correctifs de sécurité appliqués à la base et,
+surtout, les cas où un avertissement automatique (lint Supabase) a été
+volontairement IGNORÉ car son correctif par défaut aurait cassé l'app.
+À consulter avant d'appliquer aveuglément un correctif suggéré par un lint
+de sécurité sur ce projet.
+
+
+1. FONCTIONS is_admin() ET is_contributor()
+--------------------------------------------
+Définition (schéma public) :
+
+  CREATE FUNCTION public.is_admin() RETURNS boolean
+    LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public AS $$
+    SELECT EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin');
+  $$;
+
+  (is_contributor() est identique, avec role IN ('admin','contributeur'))
+
+Rôle : vérifient uniquement si L'UTILISATEUR APPELANT LUI-MÊME (via
+auth.uid(), pas un paramètre) a le rôle admin/contributeur dans la table
+profiles. Ne renvoient qu'un booléen, ne prennent aucun paramètre, ne
+peuvent donc jamais faire fuiter d'information sur un autre utilisateur.
+
+Utilisées à l'intérieur des policies RLS suivantes :
+  - public.action        : contributor_insert_action, contributor_update_action,
+                            contributor_delete_action
+  - public.profiles      : admin_update_profiles, admin_delete_profiles
+  - storage.objects       : "contributor upload action-photos",
+                            "contributor delete action-photos"
+
+Pourquoi SECURITY DEFINER (et pas SECURITY INVOKER) :
+  La fonction lit la table profiles. Si elle était en SECURITY INVOKER,
+  cette lecture interne serait elle-même soumise aux policies RLS de
+  l'appelant — risque de récursion / dépendance circulaire quand la
+  fonction est appelée depuis une policy définie SUR profiles elle-même
+  (admin_update_profiles, admin_delete_profiles). SECURITY DEFINER est le
+  pattern officiellement recommandé par Supabase pour ce type de fonction
+  utilitaire de rôle, précisément pour éviter ce problème.
+
+Droits d'exécution (EXECUTE) — état voulu et vérifié :
+  - anon           : AUCUN accès (révoqué explicitement, y compris le
+                      grant par défaut que Supabase accorde à la création
+                      de toute fonction — PUBLIC seul ne suffit pas à le
+                      retirer, il faut aussi "REVOKE ... FROM anon").
+  - authenticated   : accès NÉCESSAIRE — c'est ce rôle qui évalue les
+                      policies RLS ci-dessus pour tout utilisateur connecté
+                      (admin, contributeur ET client). Le lui retirer
+                      bloque l'ajout/modif/suppression d'actions et la
+                      gestion des utilisateurs pour TOUT LE MONDE, y
+                      compris les admins légitimes.
+  - service_role    : accès conservé (par défaut Supabase, sans impact).
+
+search_path : explicitement fixé à "public" dans la définition de la
+fonction (SET search_path = public). C'est la protection standard contre
+le détournement d'une fonction SECURITY DEFINER (empêche qu'une table/
+fonction malveillante placée dans un autre schéma soit résolue à la place
+de la bonne à l'intérieur de la fonction).
+
+
+2. LINT "SECURITY DEFINER appelable par authenticated" — À IGNORER ICI
+------------------------------------------------------------------------
+Les scanners de sécurité automatiques (ex. Supabase Advisor / lints du
+type 0025_public_bucket_allows_listing, function_search_path_mutable,
+etc.) signalent parfois is_admin()/is_contributor() comme "SECURITY
+DEFINER appelable par authenticated via /rest/v1/rpc/..." et suggèrent
+par défaut l'une de ces trois options :
+
+  Option 1 : REVOKE EXECUTE ... FROM authenticated, public;
+     -> NE PAS APPLIQUER. Casse l'app (voir ci-dessus : authenticated a
+        besoin de cet accès pour que les policies RLS fonctionnent).
+
+  Option 2 : ALTER FUNCTION ... SECURITY INVOKER;
+     -> NE PAS APPLIQUER. Réintroduit le risque de récursion RLS que
+        SECURITY DEFINER a été choisi pour éviter (voir section 1).
+
+  Option 3 : garder SECURITY DEFINER, s'assurer que la fonction ne fait
+             que renvoyer un booléen sans fuite d'info, avec search_path
+             pinné.
+     -> C'EST LA SITUATION ACTUELLE. Rien à changer.
+
+Conclusion : si ce lint réapparaît (il peut revenir tant que la base a
+des fonctions SECURITY DEFINER appelables par authenticated — c'est
+inhérent au pattern, pas un vrai problème), vérifier juste que :
+  a) la fonction ne renvoie toujours qu'un booléen basé sur auth.uid(),
+  b) anon n'a toujours pas EXECUTE,
+  c) search_path reste pinné,
+  puis considérer le lint comme un faux positif et ne rien changer.
+
+
+3. AUTRES CORRECTIFS DE SÉCURITÉ APPLIQUÉS CETTE SESSION
+-----------------------------------------------------------
+- Colonne action.id_action élargie de varchar(10) à varchar(20)
+  (corrige un blocage d'ajout d'action, sans lien sécurité).
+
+- RLS "USING (true)" trop permissives supprimées sur :
+    public.action    : public_delete_action, public_update_action
+    public.profiles  : public_all_profiles
+  (permettaient à n'importe qui, même non connecté, de supprimer/modifier
+  des actions ou des profils utilisateurs directement via l'API).
+
+- RLS profiles.DELETE : policy authenticated rétablie après la
+  suppression ci-dessus (auth_delete_profiles), pour ne pas casser la
+  fonctionnalité de suppression d'utilisateur du panneau admin — puis
+  remplacée par une version admin_delete_profiles restreinte au rôle
+  admin (voir point suivant).
+
+- Passage d'un modèle "connecté = tous droits" à un modèle par rôle :
+    public.action   : lecture = tout connecté, écriture = admin/contributeur
+    public.profiles : modification/suppression = admin uniquement
+  (correspond exactement à isContrib()/isAdmin() déjà utilisés côté app —
+  c'est maintenant appliqué aussi côté base, pas seulement dans l'UI).
+
+- storage.objects (bucket action-photos, public) :
+    - Policies SELECT larges supprimées (permettaient le listing/
+      énumération des fichiers du bucket via l'API Storage — lecture par
+      URL directe non affectée, un bucket public n'a pas besoin de policy
+      SELECT pour ça).
+    - Policies INSERT/DELETE en doublon, non protégées malgré leur nom
+      ("authenticated upload/delete photos" ne vérifiait en réalité aucune
+      authentification) remplacées par des policies réservées aux
+      admins/contributeurs (is_contributor()).
+
+- Recommandation en attente (à faire manuellement, hors DB) : activer
+  "Leaked Password Protection" dans Supabase Dashboard > Authentication >
+  Password Security, pour vérifier les mots de passe contre HaveIBeenPwned
+  à la création/changement de compte.
