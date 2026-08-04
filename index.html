@@ -1173,7 +1173,7 @@ function renderBatiment(){
 function selectObs(id){selectedObs=DB.observations.find(o=>o['ID_Observation']===id);renderObservation();}
 function renderObservation(){
   const o=selectedObs; const actions=getActions(o['ID_Observation']); const canEdit=canContribute();
-  const nextId='ACT-'+String(DB.actions.length+1).padStart(4,'0');
+  const nextId=computeNextActionId();
   document.getElementById('content').innerHTML=`
     <div class="back-btn" onclick="selectBat('${selectedBat['ID_Batiment']}')">← ${selectedBat['Nom']||selectedBat['ID_Batiment']}</div>
     <div class="detail-panel">
@@ -1263,7 +1263,28 @@ function renderObservation(){
 }
 
 // ===== ADD ACTION =====
-function addAction(obsId,actionId){
+// Numéro le plus élevé parmi une liste d'ID au format "ACT-0001" (ignore
+// silencieusement tout ID qui ne suit pas ce format).
+function _maxActionNum(ids){
+  let max=0;
+  ids.forEach(id=>{
+    const m=/^ACT-(\d+)$/.exec(id||'');
+    if(m){ const n=parseInt(m[1],10); if(n>max) max=n; }
+  });
+  return max;
+}
+// Basé sur le plus haut ID existant plutôt que sur DB.actions.length : reste
+// correct même si des actions ont été supprimées (sinon un ID déjà utilisé
+// pouvait être régénéré, provoquant un conflit à l'enregistrement).
+function computeNextActionId(){
+  return 'ACT-'+String(_maxActionNum(DB.actions.map(a=>a['ID_Action']))+1).padStart(4,'0');
+}
+
+function buildActionRecord(a){
+  return {id_action:a['ID_Action'],id_observation:a['ID_Observation'],num_action:parseInt(a['Num_Action'])||null,description:a['Description']||null,quantite_realisee:parseFloat(a['Quantite_realisee'])||null,unite:a['Unite']||null,etat_estime:parseInt(a['Etat_estime'])||null,date_action:a['Date']||null,ok_nok:a['OK_NOK']||null,wo:a['WO']||null,remarques:a['Remarques']||null,encoded_par:a['encoded_par']||null};
+}
+
+async function addAction(obsId,actionId){
   const action={
     'ID_Action':actionId,'ID_Observation':obsId,
     'Num_Action':String(DB.actions.filter(a=>a['ID_Observation']===obsId).length+1),
@@ -1280,16 +1301,30 @@ function addAction(obsId,actionId){
   };
   const msg=document.getElementById('success-msg');
   msg.style.display='block'; msg.textContent='⏳ Sauvegarde…';
-  const record={id_action:action['ID_Action'],id_observation:action['ID_Observation'],num_action:parseInt(action['Num_Action'])||null,description:action['Description']||null,quantite_realisee:parseFloat(action['Quantite_realisee'])||null,unite:action['Unite']||null,etat_estime:parseInt(action['Etat_estime'])||null,date_action:action['Date']||null,ok_nok:action['OK_NOK']||null,wo:action['WO']||null,remarques:action['Remarques']||null,encoded_par:action['encoded_par']||null};
-  supabaseInsert('action',record).then(ok=>{
-    if(ok){
-      DB.actions.push(action);
-      msg.textContent='✓ Action sauvegardée !';
 
-      setTimeout(()=>selectObs(obsId),1500);
-    }
-    else{msg.textContent='⚠️ Erreur de sauvegarde.';msg.style.background='#2e1a1a';msg.style.color='var(--red)';}
-  });
+  let ok=await supabaseInsert('action',buildActionRecord(action));
+
+  if(!ok){
+    // L'ID proposé a pu être pris entre-temps par un autre utilisateur (ou par
+    // une action ajoutée depuis un autre appareil) : on revérifie le plus haut
+    // ID réellement en base et on retente une fois avec un ID frais, plutôt
+    // que d'abandonner directement.
+    try{
+      const rows=await supabaseFetch('action','id_action',10000);
+      const freshId='ACT-'+String(_maxActionNum(rows.map(r=>r.id_action))+1).padStart(4,'0');
+      if(freshId!==action['ID_Action']){
+        action['ID_Action']=freshId;
+        ok=await supabaseInsert('action',buildActionRecord(action));
+      }
+    }catch(_){}
+  }
+
+  if(ok){
+    DB.actions.push(action);
+    msg.textContent='✓ Action sauvegardée !';
+    setTimeout(()=>selectObs(obsId),1500);
+  }
+  else{msg.textContent='⚠️ Erreur de sauvegarde.';msg.style.background='#2e1a1a';msg.style.color='var(--red)';}
 }
 
 function closeModal(e){if(!e||e.target===document.getElementById('modal-overlay'))document.getElementById('modal-overlay').style.display='none';}
