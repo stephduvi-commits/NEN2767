@@ -5,7 +5,8 @@
       "Bash(node \"C:\\\\Users\\\\steph\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--Claude-NEN2767-main\\\\a40d5488-2858-4d5e-81f1-f54367d4264a\\\\scratchpad\\\\checktags.js\")",
       "Bash(git log *)",
       "mcp__claude_ai_Supabase__get_logs",
-      "mcp__claude_ai_Supabase__execute_sql"
+      "mcp__claude_ai_Supabase__execute_sql",
+      "mcp__claude_ai_Supabase__get_advisors"
     ]
   }
 }
