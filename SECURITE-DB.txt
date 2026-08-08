@@ -133,8 +133,9 @@ inhérent au pattern, pas un vrai problème), vérifier juste que :
   à la création/changement de compte.
 
 
-4. BUG (2026-08-04 → 2026-08-08) : is_contributor() NE FONCTIONNE PAS
-   DANS LES POLICIES storage.objects — NE PAS RÉUTILISER CE PATTERN
+4. BUG (2026-08-04 → 2026-08-08) : upload de photos cassé sur
+   storage.objects — CAUSE JAMAIS CONFIRMÉE, NE PAS RÉINTRODUIRE
+   is_contributor() SUR storage.objects SANS TEST RÉEL PRÉALABLE
 ------------------------------------------------------------------------
 Symptôme : depuis le passage des policies storage.objects (bucket
 action-photos) à is_contributor() le 2026-08-04, TOUT upload de photo
@@ -143,40 +144,66 @@ l'erreur Postgres "new row violates row-level security policy for table
 objects" — y compris pour des admins actifs venant de se connecter
 (token JWT valide et non expiré, vérifié via les logs auth).
 
-Diagnostic (fait le 2026-08-08 via MCP Supabase, logs + tests SQL directs) :
-  - La fonction is_contributor() est correcte (testée manuellement avec
-    l'id d'un admin réel : renvoie bien true).
-  - Les droits EXECUTE sont corrects (authenticated: oui, anon: non).
-  - Un INSERT simulé en SQL avec le contexte JWT du même utilisateur
-    réussit sans problème.
-  - Pourtant, en conditions réelles, la MÊME requête (même token, même
-    utilisateur, à quelques secondes d'intervalle) réussit sur
-    /rest/v1/action (policy contributor_insert_action, aussi basée sur
-    is_contributor()) mais échoue sur /storage/v1/object/action-photos/...
-  - Conclusion : le service Storage de Supabase ne propage pas de façon
-    fiable le GUC "request.jwt.claims" jusqu'à l'évaluation de la policy
-    RLS (contrairement à PostgREST), ce qui fait que auth.uid() retourne
-    NULL à l'intérieur de is_contributor() dans ce contexte précis, même
-    si le rôle Postgres de la connexion est bien "authenticated" (EXECUTE
-    fonctionne, donc ce n'est pas un problème de droits).
+État final (résolu le 2026-08-08) — policy actuellement en place :
 
-Correctif appliqué (migration fix_storage_action_photos_rls_use_authenticated_role) :
-  Policies storage.objects réécrites pour ne PLUS dépendre d'une fonction
-  qui lit auth.uid()/profiles, et utiliser à la place la restriction de
-  rôle native de Postgres (TO authenticated), évaluée par appartenance de
-  rôle et indépendante de tout GUC JWT :
+    CREATE POLICY "action_photos_all" ON storage.objects
+    FOR ALL
+    USING (bucket_id = 'action-photos')
+    WITH CHECK (bucket_id = 'action-photos');
 
-    CREATE POLICY "authenticated upload action-photos" ON storage.objects
-    FOR INSERT TO authenticated WITH CHECK (bucket_id = 'action-photos');
+Aucune vérification de rôle (admin/contributeur) ni d'authentification
+réelle : équivalent au comportement bugué d'avant le 4 août (n'importe
+qui connu du bucket peut lire/écrire/supprimer). Accepté comme
+compromis temporaire — voir "limite acceptée" plus bas.
 
-    CREATE POLICY "authenticated delete action-photos" ON storage.objects
-    FOR DELETE TO authenticated USING (bucket_id = 'action-photos');
+Ce qui a été essayé et a ÉCHOUÉ, dans l'ordre (toutes ces tentatives
+produisaient exactement la même erreur RLS, y compris la dernière qui
+est pourtant la policy la plus permissive imaginable avant l'état final) :
+  1. is_contributor() avec roles={public} (version du 4 août).
+  2. TO authenticated WITH CHECK (bucket_id = '...') sans fonction.
+  3. Retour à is_contributor() + ajout d'une policy UPDATE manquante
+     (hypothèse : le header x-upsert de Storage déclenche un
+     INSERT ... ON CONFLICT DO UPDATE, qui exigerait une policy UPDATE
+     même sans conflit réel — index unique sur (bucket_id, name)).
+  4. GRANT EXECUTE sur is_contributor()/is_admin() à supabase_storage_admin
+     (rôle réellement utilisé par le service Storage, découvert via un
+     trigger de diagnostic — PAS "postgres" ni "authenticated").
+  5. Policy triviale bucket_id = 'action-photos' SANS aucune fonction ni
+     restriction de rôle — ÉCHOUE ENCORE, alors qu'un trigger de
+     diagnostic (BEFORE INSERT, RAISE WARNING) confirmait dans la MÊME
+     transaction, 1ms avant l'échec, que auth.uid()/is_contributor()
+     étaient corrects.
 
-Limite acceptée : n'importe quel utilisateur connecté (pas seulement
-admin/contributeur) peut uploader/supprimer des photos dans ce bucket.
-Sans impact actuel : les 5 comptes existants sont tous admin ou
-contributeur (aucun rôle "client"/lecteur n'a de compte à ce jour). À
-revoir si un rôle "client" avec compte de connexion est introduit un
-jour — ne PAS remettre is_contributor() sur storage.objects sans
-d'abord confirmer que Supabase a corrigé la propagation du JWT côté
-Storage (tester en conditions réelles, pas seulement en SQL direct).
+Ce qui a réellement débloqué la situation : suppression MANUELLE de
+TOUTES les policies storage.objects via le Dashboard Supabase (Storage
+> Policies), suivie de la recréation d'UNE SEULE policy propre
+("action_photos_all" ci-dessus) via SQL. Autrement dit, le problème a
+disparu après un nettoyage complet de l'état des policies sur cette
+table plutôt qu'après un changement de logique — ce qui suggère un
+policy fantôme/orphelin ou un état de cache (Storage et/ou pooler
+Supavisor) non invalidé par nos CREATE/DROP POLICY successifs, sans
+qu'on ait pu confirmer lequel. La vraie cause racine n'a jamais été
+identifiée avec certitude malgré un diagnostic poussé (trigger de
+capture d'auth, vérification des GRANT, du owner de la table, etc. —
+détails dans l'historique de conversation du 2026-08-08 si besoin).
+
+Limite acceptée : n'importe quel utilisateur connecté OU NON (la policy
+ne vérifie même plus auth.role()) peut uploader/supprimer des photos
+dans ce bucket. Sans impact fonctionnel actuel : les 5 comptes existants
+sont tous admin ou contributeur (aucun rôle "client"/lecteur n'a de
+compte à ce jour), et l'app ne permet d'accéder à l'écran d'ajout de
+photo qu'aux utilisateurs connectés de toute façon.
+
+À FAIRE avant de resserrer à nouveau cette policy (ex. remettre
+is_contributor()) :
+  a) Ne JAMAIS se fier à un test SQL direct (via l'éditeur SQL / MCP)
+     pour valider une policy storage.objects — il ne reproduit PAS
+     fidèlement le contexte du service Storage (rôle réel de connexion
+     = supabase_storage_admin, pas postgres/authenticated). Tester
+     uniquement avec un vrai upload depuis l'app.
+  b) Si un resserrement recasse l'upload, supprimer TOUTES les policies
+     du bucket via le Dashboard (pas juste DROP POLICY en SQL) avant de
+     recréer, au cas où l'état orphelin en soit la cause.
+  c) Envisager de contacter le support Supabase si le problème revient
+     (un rapport détaillé avait été préparé le 2026-08-08, cf. si besoin
+     de le retrouver/regénérer).
