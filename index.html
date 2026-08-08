@@ -509,6 +509,8 @@ let currentUser = null;
 let selectedBat = null;
 let selectedObs = null;
 let currentMainView = 'plan';
+let addActionPhotos = [];
+let currentAddReplaceIdx = null;
 
 // ===== SUPABASE =====
 let supabaseSession = null;
@@ -1215,7 +1217,7 @@ function renderObservation(){
     </div>
     ${canEdit?`
     <div style="margin-bottom:16px">
-      <button class="btn btn-primary" onclick="document.getElementById('add-action-form').style.display='block';this.style.display='none'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Ajouter une action</button>
+      <button class="btn btn-primary" onclick="addActionPhotos=[];currentAddReplaceIdx=null;document.getElementById('add-action-form').style.display='block';this.style.display='none'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Ajouter une action</button>
     </div>
     <div id="add-action-form" style="display:none">
     <div class="form-card">
@@ -1241,9 +1243,19 @@ function renderObservation(){
           <select id="f-oknok"><option value="">— Sélectionner —</option><option value="ok">Terminé</option><option value="nok">En cours</option><option value="ouvert">Ouvert</option><option value="supprimé">Supprimé</option></select>
         </div>
         <div class="form-group full"><label>Remarques</label><textarea id="f-rem" placeholder="Remarques…"></textarea></div>
+        <div class="form-group full">
+          <label>Photos <span style="color:var(--muted);font-weight:400;font-size:11px">(3 max · galerie)</span></label>
+          <div id="add-photos-container" style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px"></div>
+          <input type="file" id="add-photo-input" accept="image/*" style="display:none" onchange="handleAddPhoto(this)">
+          <div class="add-photo-btns" style="display:flex;gap:8px">
+            <button onclick="currentAddReplaceIdx=null;document.getElementById('add-photo-input').click()" style="flex:1;padding:8px 12px;background:var(--bg);border:1px dashed var(--border2);border-radius:8px;color:var(--muted);cursor:pointer;font-size:13px;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Ajouter une photo depuis la galerie
+            </button>
+          </div>
+        </div>
       </div>
       <div class="form-actions">
-        <button class="btn btn-ghost" onclick="selectObs('${o['ID_Observation']}')">Annuler</button>
+        <button class="btn btn-ghost" onclick="addActionPhotos=[];selectObs('${o['ID_Observation']}')">Annuler</button>
         <button class="btn btn-primary" onclick="addAction('${o['ID_Observation']}','${nextId}')">Enregistrer</button>
       </div>
     </div>
@@ -1269,10 +1281,41 @@ function computeNextActionId(){
 }
 
 function buildActionRecord(a){
-  return {id_action:a['ID_Action'],id_observation:a['ID_Observation'],num_action:parseInt(a['Num_Action'])||null,description:a['Description']||null,quantite_realisee:parseFloat(a['Quantite_realisee'])||null,unite:a['Unite']||null,etat_estime:parseInt(a['Etat_estime'])||null,date_action:a['Date']||null,ok_nok:a['OK_NOK']||null,wo:a['WO']||null,remarques:a['Remarques']||null,encoded_par:a['encoded_par']||null};
+  const record={id_action:a['ID_Action'],id_observation:a['ID_Observation'],num_action:parseInt(a['Num_Action'])||null,description:a['Description']||null,quantite_realisee:parseFloat(a['Quantite_realisee'])||null,unite:a['Unite']||null,etat_estime:parseInt(a['Etat_estime'])||null,date_action:a['Date']||null,ok_nok:a['OK_NOK']||null,wo:a['WO']||null,remarques:a['Remarques']||null,encoded_par:a['encoded_par']||null};
+  // Champs multi-photos ajoutés uniquement si au moins une photo est présente
+  if(a['photo_url_1']!==undefined){
+    record.photo_url=a['photo_url']||null;
+    record.photo_url_1=a['photo_url_1']||null;
+    record.photo_url_2=a['photo_url_2']||null;
+    record.photo_url_3=a['photo_url_3']||null;
+    record.photo_comment_1=a['photo_comment_1']||null;
+    record.photo_comment_2=a['photo_comment_2']||null;
+    record.photo_comment_3=a['photo_comment_3']||null;
+  }
+  return record;
 }
 
 async function addAction(obsId,actionId){
+  const msg=document.getElementById('success-msg');
+  msg.style.display='block'; msg.textContent='⏳ Sauvegarde…';
+
+  // Upload des photos jointes (le cas échéant) avant la création de l'action
+  const activePhotos = addActionPhotos.filter(p=>!p.toDelete);
+  const photoUrls=[null,null,null];
+  const photoComments=['','',''];
+  for(let i=0;i<Math.min(activePhotos.length,3);i++){
+    const ph = activePhotos[i];
+    msg.textContent=`⏳ Upload photo ${i+1}/${activePhotos.length}…`;
+    const filename=`${obsId}_${actionId}_${i+1}_${Date.now()}.webp`;
+    const url = await uploadPhotoDesktop(ph.blob, filename);
+    if(!url){
+      msg.textContent=`⚠️ Erreur upload photo ${i+1}.`; msg.style.background='#2e1a1a'; msg.style.color='var(--red)';
+      return;
+    }
+    photoUrls[i] = url;
+    photoComments[i] = ph.comment || '';
+  }
+
   const action={
     'ID_Action':actionId,'ID_Observation':obsId,
     'Num_Action':String(DB.actions.filter(a=>a['ID_Observation']===obsId).length+1),
@@ -1285,10 +1328,18 @@ async function addAction(obsId,actionId){
     'WO':document.getElementById('f-wo').value,
     'Remarques':document.getElementById('f-rem').value,
     'encoded_par':currentUser?(currentUser.nom||currentUser.username):'—',
-    'photo_url':''
+    'photo_url':photoUrls[0]||''
   };
-  const msg=document.getElementById('success-msg');
-  msg.style.display='block'; msg.textContent='⏳ Sauvegarde…';
+  if(photoUrls.some(u=>u)){
+    action['photo_url_1']=photoUrls[0]||'';
+    action['photo_url_2']=photoUrls[1]||'';
+    action['photo_url_3']=photoUrls[2]||'';
+    action['photo_comment_1']=photoComments[0]||'';
+    action['photo_comment_2']=photoComments[1]||'';
+    action['photo_comment_3']=photoComments[2]||'';
+  }
+
+  msg.textContent='⏳ Sauvegarde…';
 
   let ok=await supabaseInsert('action',buildActionRecord(action));
 
@@ -1309,6 +1360,7 @@ async function addAction(obsId,actionId){
 
   if(ok){
     DB.actions.push(action);
+    addActionPhotos=[];
     msg.textContent='✓ Action sauvegardée !';
     setTimeout(()=>selectObs(obsId),1500);
   }
@@ -1509,13 +1561,13 @@ function deleteModalPhoto(idx){
   editModalPhotos[idx].toDelete = true;
   renderModalPhotos();
 }
-function applyDesktopWatermark(canvas, ctx, comment) {
+function applyDesktopWatermark(canvas, ctx, comment, dateFieldId='m-date') {
   const w = canvas.width, h = canvas.height;
   // Ligne 1 : Nom du bâtiment
   const bat = selectedBat ? (selectedBat['Nom'] || selectedBat['ID_Batiment']) : '—';
   // Ligne 2 : Élément de l'observation + date
   const elem = selectedObs ? (selectedObs['Élément'] || selectedObs['ID_Observation']) : '—';
-  const date = document.getElementById('m-date')?.value || new Date().toLocaleDateString('fr-BE');
+  const date = document.getElementById(dateFieldId)?.value || new Date().toLocaleDateString('fr-BE');
   // Ligne 3 : Descriptif de la photo (comment)
   const barH = Math.max(52, Math.round(h * 0.11));
   ctx.fillStyle = 'rgba(0,0,0,0.75)';
@@ -1616,6 +1668,94 @@ function handleModalPhoto(input){
           editModalPhotos.push(slotData);
         }
         renderModalPhotos();
+      }, 'image/webp', 0.75);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ===== PHOTOS — FORMULAIRE "AJOUTER UNE ACTION" =====
+// Miroir de renderModalPhotos/handleModalPhoto/etc. ci-dessus, mais pour le
+// formulaire d'ajout inline (pas la modale d'édition) : état séparé
+// (addActionPhotos) car les deux peuvent en théorie coexister dans le DOM.
+function renderAddPhotos(){
+  const container = document.getElementById('add-photos-container');
+  if(!container) return;
+  const active = addActionPhotos.filter(p=>!p.toDelete);
+  container.innerHTML = addActionPhotos.map((photo,idx) => {
+    if(photo.toDelete) return '';
+    const src = photo.blob ? URL.createObjectURL(photo.blob) : photo.url;
+    const allUrls = JSON.stringify([src]).replace(/"/g,'&quot;');
+    const allComm = JSON.stringify([photo.comment||'']).replace(/"/g,'&quot;');
+    return `<div style="display:flex;gap:10px;align-items:flex-start;padding:10px;background:var(--bg);border:1px solid var(--border2);border-radius:10px">
+      <img id="add-photo-preview-${idx}" src="${src}" style="width:80px;height:64px;object-fit:cover;border-radius:6px;cursor:pointer;flex-shrink:0"
+        onclick="openPhotoLightbox(${allUrls},${allComm})" loading="lazy" title="Agrandir">
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+        <div style="font-size:11px;color:var(--muted);font-weight:600">Photo ${idx+1}</div>
+        <input type="text" placeholder="Commentaire photo (watermark)…" value="${photo.comment||''}"
+          oninput="addActionPhotos[${idx}].comment=this.value;refreshAddWatermark(${idx})"
+          style="padding:6px 10px;background:var(--surface);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-size:12px;font-family:'Inter',sans-serif;outline:none;width:100%">
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button onclick="replaceAddPhoto(${idx})" style="padding:4px 10px;background:var(--surface);border:1px solid var(--border2);border-radius:6px;color:var(--muted);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-6"/></svg> Changer</button>
+          <button onclick="deleteAddPhoto(${idx})" style="padding:4px 10px;background:#2e1a1a;border:1px solid #4a2a2a;border-radius:6px;color:var(--red);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Supprimer</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  const addDiv = document.querySelector('#add-action-form .add-photo-btns');
+  if(addDiv) addDiv.style.display = active.length >= 3 ? 'none' : 'flex';
+}
+
+function replaceAddPhoto(idx){
+  currentAddReplaceIdx = idx;
+  document.getElementById('add-photo-input').click();
+}
+function deleteAddPhoto(idx){
+  addActionPhotos[idx].toDelete = true;
+  renderAddPhotos();
+}
+function refreshAddWatermark(idx) {
+  const slot = addActionPhotos[idx];
+  if (!slot || !slot.imgEl) return;
+  const canvas = document.createElement('canvas');
+  canvas.width = slot.origW; canvas.height = slot.origH;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(slot.imgEl, 0, 0, slot.origW, slot.origH);
+  applyDesktopWatermark(canvas, ctx, slot.comment || '', 'f-date');
+  canvas.toBlob(blob => {
+    addActionPhotos[idx].blob = blob;
+    const preview = document.getElementById('add-photo-preview-' + idx);
+    if (preview) preview.src = URL.createObjectURL(blob);
+  }, 'image/webp', 0.75);
+}
+function handleAddPhoto(input){
+  const file = input.files[0]; if(!file) return;
+  input.value='';
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const MAX = 1200;
+      let w=img.width, h=img.height;
+      if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
+      if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}
+      canvas.width=w; canvas.height=h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img,0,0,w,h);
+      applyDesktopWatermark(canvas, ctx, '', 'f-date');
+      canvas.toBlob(blob=>{
+        const slotData = {url:'', comment:'', blob, toDelete:false, imgEl:img, origW:w, origH:h};
+        if(currentAddReplaceIdx !== null){
+          addActionPhotos[currentAddReplaceIdx] = {...addActionPhotos[currentAddReplaceIdx], ...slotData, toDelete:false};
+          currentAddReplaceIdx = null;
+        } else {
+          const active = addActionPhotos.filter(p=>!p.toDelete);
+          if(active.length >= 3) return;
+          addActionPhotos.push(slotData);
+        }
+        renderAddPhotos();
       }, 'image/webp', 0.75);
     };
     img.src = e.target.result;
