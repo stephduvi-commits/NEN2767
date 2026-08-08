@@ -1,7 +1,7 @@
 SÉCURITÉ BASE DE DONNÉES (Supabase) — NOTES DE DÉCISION
 =========================================================
 Projet Supabase : NEN2767 (jingwuxekcihiiktsidy)
-Dernière mise à jour : 2026-08-04
+Dernière mise à jour : 2026-08-08
 
 Ce fichier documente les correctifs de sécurité appliqués à la base et,
 surtout, les cas où un avertissement automatique (lint Supabase) a été
@@ -30,8 +30,9 @@ Utilisées à l'intérieur des policies RLS suivantes :
   - public.action        : contributor_insert_action, contributor_update_action,
                             contributor_delete_action
   - public.profiles      : admin_update_profiles, admin_delete_profiles
-  - storage.objects       : "contributor upload action-photos",
-                            "contributor delete action-photos"
+
+  storage.objects N'UTILISE PLUS is_contributor() depuis le 2026-08-08 —
+  voir section 4 (bug de propagation JWT côté Storage).
 
 Pourquoi SECURITY DEFINER (et pas SECURITY INVOKER) :
   La fonction lit la table profiles. Si elle était en SECURITY INVOKER,
@@ -123,9 +124,59 @@ inhérent au pattern, pas un vrai problème), vérifier juste que :
     - Policies INSERT/DELETE en doublon, non protégées malgré leur nom
       ("authenticated upload/delete photos" ne vérifiait en réalité aucune
       authentification) remplacées par des policies réservées aux
-      admins/contributeurs (is_contributor()).
+      admins/contributeurs (is_contributor()). VOIR SECTION 4 : ce
+      changement a cassé l'upload de photos et a été corrigé le 2026-08-08.
 
 - Recommandation en attente (à faire manuellement, hors DB) : activer
   "Leaked Password Protection" dans Supabase Dashboard > Authentication >
   Password Security, pour vérifier les mots de passe contre HaveIBeenPwned
   à la création/changement de compte.
+
+
+4. BUG (2026-08-04 → 2026-08-08) : is_contributor() NE FONCTIONNE PAS
+   DANS LES POLICIES storage.objects — NE PAS RÉUTILISER CE PATTERN
+------------------------------------------------------------------------
+Symptôme : depuis le passage des policies storage.objects (bucket
+action-photos) à is_contributor() le 2026-08-04, TOUT upload de photo
+(mobile et PC, comptes admin ET contributeur) échouait avec un 400 et
+l'erreur Postgres "new row violates row-level security policy for table
+objects" — y compris pour des admins actifs venant de se connecter
+(token JWT valide et non expiré, vérifié via les logs auth).
+
+Diagnostic (fait le 2026-08-08 via MCP Supabase, logs + tests SQL directs) :
+  - La fonction is_contributor() est correcte (testée manuellement avec
+    l'id d'un admin réel : renvoie bien true).
+  - Les droits EXECUTE sont corrects (authenticated: oui, anon: non).
+  - Un INSERT simulé en SQL avec le contexte JWT du même utilisateur
+    réussit sans problème.
+  - Pourtant, en conditions réelles, la MÊME requête (même token, même
+    utilisateur, à quelques secondes d'intervalle) réussit sur
+    /rest/v1/action (policy contributor_insert_action, aussi basée sur
+    is_contributor()) mais échoue sur /storage/v1/object/action-photos/...
+  - Conclusion : le service Storage de Supabase ne propage pas de façon
+    fiable le GUC "request.jwt.claims" jusqu'à l'évaluation de la policy
+    RLS (contrairement à PostgREST), ce qui fait que auth.uid() retourne
+    NULL à l'intérieur de is_contributor() dans ce contexte précis, même
+    si le rôle Postgres de la connexion est bien "authenticated" (EXECUTE
+    fonctionne, donc ce n'est pas un problème de droits).
+
+Correctif appliqué (migration fix_storage_action_photos_rls_use_authenticated_role) :
+  Policies storage.objects réécrites pour ne PLUS dépendre d'une fonction
+  qui lit auth.uid()/profiles, et utiliser à la place la restriction de
+  rôle native de Postgres (TO authenticated), évaluée par appartenance de
+  rôle et indépendante de tout GUC JWT :
+
+    CREATE POLICY "authenticated upload action-photos" ON storage.objects
+    FOR INSERT TO authenticated WITH CHECK (bucket_id = 'action-photos');
+
+    CREATE POLICY "authenticated delete action-photos" ON storage.objects
+    FOR DELETE TO authenticated USING (bucket_id = 'action-photos');
+
+Limite acceptée : n'importe quel utilisateur connecté (pas seulement
+admin/contributeur) peut uploader/supprimer des photos dans ce bucket.
+Sans impact actuel : les 5 comptes existants sont tous admin ou
+contributeur (aucun rôle "client"/lecteur n'a de compte à ce jour). À
+revoir si un rôle "client" avec compte de connexion est introduit un
+jour — ne PAS remettre is_contributor() sur storage.objects sans
+d'abord confirmer que Supabase a corrigé la propagation du JWT côté
+Storage (tester en conditions réelles, pas seulement en SQL direct).
