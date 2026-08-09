@@ -2556,8 +2556,8 @@ function generateBatPDF(batId) {
 
   const obsBlocksHtml = obs.map(renderObsBlock);
 
-  // ===== EN-TÊTE / PIED DE PAGE RÉPÉTÉS =====
-  function pageHeaderHtml() {
+  // ===== EN-TÊTE RÉPÉTÉ (numérotation sous la date, pas de pied de page) =====
+  function pageHeaderHtml(pageNum, totalPages) {
     return `<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6mm;padding-bottom:4mm;border-bottom:3px solid #f49634">
       <div>
         <div style="font-size:20px;font-weight:800">NEN 2767 <span style="color:#f49634">AMAYFA</span></div>
@@ -2566,16 +2566,10 @@ function generateBatPDF(batId) {
       <div style="text-align:right">
         <div style="font-size:13px;font-weight:700;color:#f49634">FICHE BÂTIMENT — ${b['Nom']||b['ID_Batiment']}</div>
         <div style="font-size:10px;color:#666">${dateStr}</div>
+        <div style="font-size:10px;color:#999;margin-top:2px">Page ${pageNum} / ${totalPages}</div>
       </div>
     </div>`;
   }
-  function pageFooterHtml(pageNum, totalPages) {
-    return `<div style="margin-top:6mm;padding-top:3mm;border-top:1px solid #e0e0e0;display:flex;justify-content:space-between;font-size:9px;color:#999">
-      <span>NEN 2767 AMAYFA</span>
-      <span>Page ${pageNum} / ${totalPages}</span>
-    </div>`;
-  }
-  const headerHtml = pageHeaderHtml();
 
   // ===== PAGINATION : mesure réelle du contenu rendu (pas d'estimation) =====
   // On ne peut pas se fier aux marges @page ni aux compteurs CSS pour ce
@@ -2598,8 +2592,9 @@ function generateBatPDF(batId) {
   const contentAreaPx = measureDiv.offsetHeight;
   measureDiv.style.height = '';
 
-  const headerPx = measure(headerHtml);
-  const footerPx = measure(pageFooterHtml(1, 1));
+  // Hauteur d'en-tête mesurée une fois (ne varie pas avec le numéro de page :
+  // texte court sur une ligne, pas de retour à la ligne à ces largeurs).
+  const headerPx = measure(pageHeaderHtml(1, 1));
   const introPx = measure(introHtml);
   const obsBlocksPx = obsBlocksHtml.map(measure);
 
@@ -2607,12 +2602,12 @@ function generateBatPDF(batId) {
 
   // Regroupe intro + observations en pages, en respectant la hauteur imprimable réelle.
   const pages = [];
-  let current = { items: [introHtml], height: headerPx + footerPx + introPx };
+  let current = { items: [introHtml], height: headerPx + introPx };
   for (let i = 0; i < obsBlocksHtml.length; i++) {
     const blockH = obsBlocksPx[i];
     if (current.items.length > 0 && current.height + blockH > contentAreaPx) {
       pages.push(current);
-      current = { items: [], height: headerPx + footerPx };
+      current = { items: [], height: headerPx };
     }
     current.items.push(obsBlocksHtml[i]);
     current.height += blockH;
@@ -2622,9 +2617,8 @@ function generateBatPDF(batId) {
 
   const pagesHtml = pages.map((p, idx) => `
     <div class="pdf-page" style="width:${PAGE_W_MM}mm;min-height:${PAGE_H_MM}mm;max-height:${PAGE_H_MM}mm;padding:${MARGIN_MM}mm;box-sizing:border-box;overflow:hidden;font-family:Arial,sans-serif;color:#1a1a1a;background:#fff">
-      ${headerHtml}
+      ${pageHeaderHtml(idx+1, totalPages)}
       ${p.items.join('')}
-      ${pageFooterHtml(idx+1, totalPages)}
     </div>`).join('');
 
   const reportDiv = document.getElementById('pdf-bat-report');
