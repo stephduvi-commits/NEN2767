@@ -199,32 +199,78 @@ ni aucune des hypothèses de rôle/JWT explorées avant — celles-ci
 échouaient toutes pour la même raison sous-jacente (absence de SELECT),
 ce qui a rendu le diagnostic très trompeur.
 
-Limite acceptée : n'importe quel utilisateur connecté OU NON (la policy
-ne vérifie même plus auth.role()) peut lire la LISTE des fichiers
-(SELECT), uploader/modifier/supprimer des photos dans ce bucket — c'est
-exactement ce que l'Advisor Supabase signale ("Clients can list all
-files in this bucket"). Sans impact fonctionnel grave actuel : les 5
-comptes existants sont tous admin ou contributeur, et le contenu du
-bucket (photos d'observations de bâtiments) n'est pas hautement
-sensible. Mais c'est une régression de sécurité volontaire, gardée
-UNIQUEMENT parce que retirer le SELECT casse l'upload (voir plus haut).
+ÉTAT FINAL (2026-08-09), après une nouvelle tentative de durcissement une
+fois le bug de clé anonyme d'uploadPhotoDesktop corrigé (voir plus bas,
+section "uploadPhotoDesktop utilisait la clé anonyme") :
+
+    CREATE POLICY "action_photos_select" ON storage.objects
+    FOR SELECT TO authenticated
+    USING (bucket_id = 'action-photos');
+
+    CREATE POLICY "action_photos_insert" ON storage.objects
+    FOR INSERT WITH CHECK (bucket_id = 'action-photos');
+
+    CREATE POLICY "action_photos_update" ON storage.objects
+    FOR UPDATE USING (bucket_id = 'action-photos') WITH CHECK (bucket_id = 'action-photos');
+
+    CREATE POLICY "action_photos_delete" ON storage.objects
+    FOR DELETE USING (bucket_id = 'action-photos');
+
+Le SELECT restreint à `TO authenticated` fonctionne cette fois (testé en
+conditions réelles) — probablement parce que le bug d'uploadPhotoDesktop
+(voir plus bas) faisait passer les requêtes PC par la clé anonyme les
+fois précédentes, faussant le diagnostic. Ça bloque le listing anonyme
+signalé par l'Advisor Supabase ("Clients can list all files").
+
+Limite acceptée : INSERT/UPDATE/DELETE restent ouverts à TOUT utilisateur
+connecté (pas de restriction admin/contributeur) — la tentative
+is_contributor() a échoué de façon reproductible et le diagnostic n'a
+jamais abouti (voir plus haut). Sans impact fonctionnel actuel : les 5
+comptes existants sont tous admin ou contributeur.
 
 À FAIRE avant de resserrer à nouveau cette policy (ex. remettre
-is_contributor(), ou séparer à nouveau SELECT des autres commandes) :
+is_contributor() sur INSERT/UPDATE/DELETE) :
   a) Ne JAMAIS se fier à un test SQL direct (via l'éditeur SQL / MCP)
      pour valider une policy storage.objects — il ne reproduit PAS
      fidèlement le contexte du service Storage (rôle réel de connexion
      = supabase_storage_admin, pas postgres/authenticated). Tester
-     uniquement avec un vrai upload depuis l'app.
+     uniquement avec un vrai upload depuis l'app, PC ET mobile.
   b) GARDER une policy SELECT sur storage.objects pour ce bucket, même
-     en resserrant les autres commandes — c'est elle qui manquait et qui
-     a causé tout l'incident (voir plus haut). Un SELECT restreint à
-     `TO authenticated` (au lieu de public) réduirait déjà l'exposition
-     sans revenir au bug : à tester en conditions réelles avant d'adopter.
+     en resserrant les autres commandes — son absence a causé tout
+     l'incident du 4-8 août (voir plus haut).
   c) Si un resserrement recasse l'upload, supprimer TOUTES les policies
      du bucket via le Dashboard (pas juste DROP POLICY en SQL) avant de
      recréer, au cas où l'état orphelin en soit la cause.
-  d) Envisager de contacter le support Supabase pour confirmer/comprendre
-     pourquoi Storage a besoin d'un SELECT ici alors que leur propre doc
-     dit le contraire pour les buckets publics (un rapport détaillé avait
-     été préparé le 2026-08-08).
+  d) Vérifier que uploadPhotoDesktop utilise bien le vrai token de
+     session (pas la clé anonyme) avant de conclure qu'un resserrement
+     échoue — c'est ce bug, pas la policy, qui a faussé le diagnostic
+     du 8 août sur le SELECT restreint.
+
+
+5. BUG : uploadPhotoDesktop (PC) utilisait la clé anonyme au lieu du
+   token de l'utilisateur connecté — corrigé le 2026-08-09
+------------------------------------------------------------------------
+`uploadPhotoDesktop()` (index.html) récupérait la session via
+`GET {SUPABASE_URL}/auth/v1/session` — un endpoint qui n'existe pas
+dans l'API Supabase (404 systématique). L'erreur était silencieusement
+absorbée par un `.catch()`, et le code retombait sur SUPABASE_KEY (la
+clé anonyme) à chaque upload PC, quel que soit l'utilisateur connecté.
+Sans conséquence tant qu'aucune policy storage.objects ne distinguait
+anon/authenticated ; mais a fait échouer à tort une tentative de
+restriction SELECT `TO authenticated` le 2026-08-08 (l'app envoyait un
+token anonyme, donc la restriction bloquait légitimement). Corrigé pour
+utiliser `supabaseSession` (comme le reste de l'app) :
+
+    const token = supabaseSession ? supabaseSession.access_token : SUPABASE_KEY;
+
+Deux autres bugs corrigés le même jour, dans les deux apps (PC + mobile) :
+  - deleteStoragePhotos() ne retirait pas le "?v=..." de cache-busting
+    des URLs avant de les envoyer à l'API de suppression Storage, donc
+    aucun fichier ne matchait jamais et la suppression échouait
+    silencieusement (fichiers orphelins accumulés en storage).
+  - Supprimer une action entière ne supprimait jamais ses photos
+    associées en storage (aucun appel à deleteStoragePhotos dans ce
+    flux). Le bucket a été nettoyé manuellement le 2026-08-09 des 113
+    photos de test/orphelines accumulées (9,5 Mo -> 2,5 Mo, 24 photos
+    réelles restantes, archivées localement dans
+    photos-archive-2026-08-09/ avant nettoyage).
