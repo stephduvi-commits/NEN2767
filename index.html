@@ -2473,20 +2473,34 @@ function generateBatPDF(batId) {
     ${obs.map(o => {
       let acts = getActions(o['ID_Observation']);
       if (fEncodeur) acts = acts.filter(a => a['encoded_par'] === fEncodeur);
-      return '<div style="margin-bottom:4mm;padding:8px 12px;background:#fafafa;border-radius:6px;border:1px solid #e0e0e0;page-break-inside:avoid">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">' +
-          '<div style="font-size:12px;font-weight:600">' + (o['Élément']||o['ID_Observation']) + '</div>' +
-          '<div style="display:flex;gap:4px;align-items:center">' +
-            '<span style="font-size:9px;color:#999;margin-right:2px">P'+o['Priorité']+'</span>' +
-            nenBadge(o['État']) +
-            '<span style="font-size:9px;color:#999;margin:0 2px">→</span>' +
-            nenBadge(calcEtatProjete(o)) +
-          '</div>' +
-        '</div>' +
-        (o['Procédure'] ? '<div style="font-size:10px;color:#666;margin-bottom:4px">' + o['Procédure'] + '</div>' : '') +
-        (acts.length === 0 ? '<div style="font-size:10px;color:#aaa;font-style:italic">Aucune action</div>' :
-          acts.map(a =>
-            '<div style="margin-top:4px;padding:6px 10px;background:#fff;border-radius:4px;border:1px solid #e8e8e8;display:flex;gap:8px;align-items:flex-start">' +
+
+      // % réalisé (quantité totale des actions / quantité de référence de l'observation)
+      // — même formule que l'écran "Observation" (renderObservation).
+      const qteRef = parseFloat(o['Quantité']);
+      const totalReal = acts.reduce((s,a)=>s+(parseFloat(a['Quantite_realisee'])||0),0);
+      const pct = (!isNaN(qteRef)&&qteRef>0) ? Math.round((totalReal/qteRef)*100) : null;
+      const pctColor = pct===null?'#999':pct>=100?'#22c55e':pct>=67?'#f49634':pct>=34?'#f59e0b':'#ef4444';
+      const pctBadge = pct!==null ? '<span style="display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:5px;border:1px solid '+pctColor+';font-size:9px;font-weight:700;color:'+pctColor+';margin-left:8px">'+pct+'%<span style="font-weight:400;color:#999"> réalisé</span></span>' : '';
+      const qteLine = '<div style="font-size:10px;color:#666;margin-bottom:4px">Quantité : ' + (o['Quantité']||'—') + ' ' + (o['Unité']||'') + pctBadge + '</div>';
+
+      // Regroupe les actions par année (la plus récente en premier), et par
+      // date décroissante au sein d'une même année.
+      function parseActDate(d) {
+        if (!d) return null;
+        const p = d.split('-');
+        return p.length === 3 ? new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0])) : null;
+      }
+      const yearGroups = {};
+      acts.forEach(a => {
+        const dt = parseActDate(a['Date']);
+        const y = dt ? String(dt.getFullYear()) : 'Sans date';
+        (yearGroups[y] = yearGroups[y] || []).push(a);
+      });
+      const years = Object.keys(yearGroups).filter(y => y !== 'Sans date').sort((a,b) => b.localeCompare(a));
+      if (yearGroups['Sans date']) years.push('Sans date');
+
+      function actionCard(a) {
+        return '<div style="margin-top:4px;padding:6px 10px;background:#fff;border-radius:4px;border:1px solid #e8e8e8;display:flex;gap:8px;align-items:flex-start">' +
               '<div style="flex:1">' +
                 '<div style="display:flex;gap:6px;align-items:center;margin-bottom:2px;flex-wrap:wrap">' +
                   '<span style="font-size:9px;font-weight:600;color:#f49634">' + (a['Date']||'—') + '</span>' +
@@ -2523,9 +2537,33 @@ function generateBatPDF(batId) {
                   ).join('') +
                 '</div>';
               })() +
-            '</div>'
-          ).join('')
-        ) +
+            '</div>';
+      }
+
+      const actionsHtml = acts.length === 0 ? '<div style="font-size:10px;color:#aaa;font-style:italic">Aucune action</div>' :
+        years.map(y => {
+          const yActs = yearGroups[y].slice().sort((a,b) => {
+            const da = parseActDate(a['Date']), db = parseActDate(b['Date']);
+            if (!da && !db) return 0; if (!da) return 1; if (!db) return -1;
+            return db - da;
+          });
+          return '<div style="font-size:9px;font-weight:700;color:#f49634;text-transform:uppercase;letter-spacing:.4px;margin-top:6px;margin-bottom:2px">' + y + ' <span style="font-weight:400;color:#999;text-transform:none">(' + yActs.length + ' action' + (yActs.length>1?'s':'') + ')</span></div>' +
+            yActs.map(actionCard).join('');
+        }).join('');
+
+      return '<div style="margin-bottom:4mm;padding:8px 12px;background:#fafafa;border-radius:6px;border:1px solid #e0e0e0;page-break-inside:avoid">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">' +
+          '<div style="font-size:12px;font-weight:600">' + (o['Élément']||o['ID_Observation']) + '</div>' +
+          '<div style="display:flex;gap:4px;align-items:center">' +
+            '<span style="font-size:9px;color:#999;margin-right:2px">P'+o['Priorité']+'</span>' +
+            nenBadge(o['État']) +
+            '<span style="font-size:9px;color:#999;margin:0 2px">→</span>' +
+            nenBadge(calcEtatProjete(o)) +
+          '</div>' +
+        '</div>' +
+        qteLine +
+        (o['Procédure'] ? '<div style="font-size:10px;color:#666;margin-bottom:4px">' + o['Procédure'] + '</div>' : '') +
+        actionsHtml +
       '</div>';
     }).join('')}
 
