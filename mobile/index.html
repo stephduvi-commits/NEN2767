@@ -640,7 +640,10 @@ async function sbDelete(table, id_col, id_val) {
 // Supprime les anciennes photos du bucket après save (fire-and-forget)
 function deleteStoragePhotos(urls) {
   const prefix = `${SUPABASE_URL}/storage/v1/object/public/action-photos/`;
-  const prefixes = urls.filter(Boolean).filter(u => u.startsWith(prefix)).map(u => u.slice(prefix.length));
+  // Retire aussi le "?v=..." de cache-busting ajouté par uploadPhoto : sans ça
+  // le nom envoyé à l'API ne correspond à aucun fichier réel et la
+  // suppression échoue silencieusement (le fichier reste orphelin en storage).
+  const prefixes = urls.filter(Boolean).filter(u => u.startsWith(prefix)).map(u => u.slice(prefix.length).split('?')[0]);
   if (!prefixes.length) return;
   const token = supabaseSession ? supabaseSession.access_token : SUPABASE_KEY;
   fetch(`${SUPABASE_URL}/storage/v1/object/action-photos`, {
@@ -1633,8 +1636,10 @@ async function confirmDeleteAction(actionId) {
   document.getElementById('delete-action-overlay')?.remove();
   const idx = DB.actions.findIndex(a => a['ID_Action'] === actionId);
   if (idx === -1) return;
+  const a = DB.actions[idx];
+  const photoUrls = [a['photo_url_1']||a['photo_url'], a['photo_url_2'], a['photo_url_3']].filter(Boolean);
   const ok = await sbDelete('action', 'id_action', actionId);
-  if (ok) { DB.actions.splice(idx, 1); goTo('actions'); }
+  if (ok) { deleteStoragePhotos(photoUrls); DB.actions.splice(idx, 1); goTo('actions'); }
   else { alert('Erreur lors de la suppression.'); }
 }
 
