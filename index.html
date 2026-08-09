@@ -2811,6 +2811,7 @@ function generatePDF(selectedMonth, selectedYear) {
           <div style="font-size:14px;font-weight:700;color:#f49634">RAPPORT MENSUEL</div>
           <div style="font-size:11px;color:#666">${moisNoms[moisCourant]} ${anneeCourante}</div>
           <div style="font-size:10px;color:#999">Généré le ${now.toLocaleDateString('fr-BE')}</div>
+          <div style="font-size:10px;color:#999;margin-top:2px">Page 1 / 2</div>
         </div>
       </div>
 
@@ -2914,10 +2915,6 @@ function generatePDF(selectedMonth, selectedYear) {
         <tbody>${actionRows(actsCourant)}</tbody>
       </table>
 
-      <div style="margin-top:8mm;padding-top:4mm;border-top:1px solid #e0e0e0;display:flex;justify-content:space-between;align-items:center">
-        <div style="font-size:10px;color:#999">NEN 2767 AMAYFA</div>
-        <div style="font-size:10px;color:#999">Page 1 / 2</div>
-      </div>
     </div>
 
     <!-- PAGE 2 : DASHBOARD TABLEAU COMPLET -->
@@ -2926,7 +2923,10 @@ function generatePDF(selectedMonth, selectedYear) {
       <!-- EN-TÊTE page 2 -->
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6mm;padding-bottom:4mm;border-bottom:2px solid #f49634">
         <div style="font-size:16px;font-weight:800;color:#1a1a1a">NEN 2767 <span style="color:#f49634">AMAYFA</span> — État du patrimoine</div>
-        <div style="font-size:10px;color:#999">${now.toLocaleDateString('fr-BE')}</div>
+        <div style="text-align:right">
+          <div style="font-size:10px;color:#999">${now.toLocaleDateString('fr-BE')}</div>
+          <div style="font-size:10px;color:#999;margin-top:2px">Page 2 / 2</div>
+        </div>
       </div>
 
       <!-- KPI GLOBAUX -->
@@ -2956,10 +2956,6 @@ function generatePDF(selectedMonth, selectedYear) {
         ${cols.map(col=>`<div style="border:1px solid #e0e0e0;border-radius:6px;overflow:hidden">${dashCol(col)}</div>`).join('')}
       </div>
 
-      <div style="margin-top:8mm;padding-top:4mm;border-top:1px solid #e0e0e0;display:flex;justify-content:space-between;align-items:center">
-        <div style="font-size:10px;color:#999">NEN 2767 AMAYFA</div>
-        <div style="font-size:10px;color:#999">Page 2 / 2</div>
-      </div>
     </div>
   </div>`;
 
