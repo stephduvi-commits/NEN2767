@@ -191,8 +191,13 @@ select option{background:var(--surface);}
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: #fff !important; color: #1a1a1a !important; font-family: Arial, sans-serif !important; }
   #login-page, #app-page { display: none !important; }
-  #pdf-report { display: block !important; }
-  #pdf-bat-report { display: block !important; padding: 0; }
+  /* Ne PAS forcer display:block !important sur les deux à la fois : seul
+     celui activé par JS (reportDiv.style.display='block') doit s'afficher.
+     Sinon le conteneur vide (autre rapport) restait forcé visible pendant
+     l'impression et, comme #pdf-report précède #pdf-bat-report dans le DOM
+     et qu'ils utilisent des pages CSS différentes (page: batreport), Chrome
+     insérait un saut de page entre les deux -> 1re page A4 blanche. */
+  #pdf-bat-report { padding: 0; }
   #pdf-inner { width: 100%; margin: 0; padding: 0; }
   .pdf-page {
     width: 100%;
