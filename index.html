@@ -174,29 +174,13 @@ select option{background:var(--surface);}
     size: A4 portrait;
     margin: 15mm 15mm 15mm 15mm;
   }
-  /* Page nommée pour la fiche bâtiment : contenu en flux continu (pas de
-     .pdf-page manuelles), donc numérotation via les marges de page CSS
-     plutôt qu'un footer codé en dur comme pour le rapport mensuel. */
-  @page batreport {
-    size: A4 portrait;
-    margin: 15mm;
-    @bottom-center {
-      content: "Page " counter(page) " / " counter(pages);
-      font-size: 9px;
-      color: #999;
-      font-family: Arial, sans-serif;
-    }
-  }
-  #pdf-bat-report { page: batreport; }
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: #fff !important; color: #1a1a1a !important; font-family: Arial, sans-serif !important; }
   #login-page, #app-page { display: none !important; }
-  /* Ne PAS forcer display:block !important sur les deux à la fois : seul
-     celui activé par JS (reportDiv.style.display='block') doit s'afficher.
-     Sinon le conteneur vide (autre rapport) restait forcé visible pendant
-     l'impression et, comme #pdf-report précède #pdf-bat-report dans le DOM
-     et qu'ils utilisent des pages CSS différentes (page: batreport), Chrome
-     insérait un saut de page entre les deux -> 1re page A4 blanche. */
+  /* Ne PAS forcer display:block !important sur #pdf-report/#pdf-bat-report :
+     seul celui activé par JS (reportDiv.style.display='block') doit
+     s'afficher, sinon le conteneur vide de l'autre rapport restait forcé
+     visible pendant l'impression (provoquait une page A4 blanche). */
   #pdf-bat-report { padding: 0; }
   #pdf-inner { width: 100%; margin: 0; padding: 0; }
   .pdf-page {
@@ -2429,28 +2413,14 @@ function generateBatPDF(batId) {
     return '<span style="display:inline-block;padding:2px 8px;border-radius:4px;background:'+nenBgPdf(n)+';color:'+nenFgPdf(n)+';font-weight:700;font-size:12px">'+n+'</span>';
   }
 
-  const html = `<div style="font-family:Arial,sans-serif;color:#1a1a1a;background:#fff;padding:15mm;margin:0;box-sizing:border-box">
-
-    <!-- EN-TÊTE -->
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6mm;padding-bottom:4mm;border-bottom:3px solid #f49634">
-      <div>
-        <div style="font-size:20px;font-weight:800">NEN 2767 <span style="color:#f49634">AMAYFA</span></div>
-        <div style="font-size:10px;color:#666;margin-top:2px">Camp Adjudant Brasseur · Route Militaire 1A · Amay · ELU Service For You</div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-size:13px;font-weight:700;color:#f49634">FICHE BÂTIMENT</div>
-        <div style="font-size:10px;color:#666">${dateStr}</div>
-      </div>
-    </div>
-
-    <!-- FILTRES ACTIFS -->
+  // ===== BLOC INTRO (page 1 uniquement) =====
+  const introHtml = `
     ${filtresActifs.length ? `<div style="margin-bottom:5mm;padding:6px 12px;background:#fff8f0;border:1.5px solid #f49634;border-radius:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
       <span style="font-size:11px;font-weight:700;color:#f49634">Filtres :</span>
       ${filtresActifs.map(f=>'<span style="padding:2px 8px;background:#f49634;color:#fff;border-radius:4px;font-size:10px;font-weight:600">'+f+'</span>').join('')}
       <span style="margin-left:auto;font-size:10px;color:#999">${obs.length} / ${allObs.length} observations</span>
     </div>` : ''}
 
-    <!-- INFO BÂTIMENT -->
     <div style="display:flex;gap:8px;margin-bottom:5mm">
       <div style="flex:1;padding:10px 14px;background:#f8f8f8;border-radius:6px;border-left:4px solid #f49634">
         <div style="font-size:17px;font-weight:800;margin-bottom:3px">${b['Nom']||b['ID_Batiment']}</div>
@@ -2469,7 +2439,6 @@ function generateBatPDF(batId) {
       ].map(k=>'<div style="padding:8px 12px;background:#f8f8f8;border-radius:6px;text-align:center;min-width:60px"><div style="font-size:20px;font-weight:800;color:'+k.c+'">'+k.v+'</div><div style="font-size:9px;color:#666;margin-top:2px">'+k.l+'</div></div>').join('')}
     </div>
 
-    <!-- ÉTATS MOYENS -->
     <div style="display:flex;gap:8px;margin-bottom:5mm">
       <div style="flex:1;padding:8px 12px;background:#f8f8f8;border-radius:6px;display:flex;align-items:center;gap:10px">
         <span style="font-size:10px;color:#666;font-weight:600;white-space:nowrap">ÉTAT INITIAL</span>
@@ -2482,119 +2451,184 @@ function generateBatPDF(batId) {
       </div>
     </div>
 
-    <!-- TITRE SECTION -->
     <div style="font-size:13px;font-weight:700;margin-bottom:4mm;padding-left:3px;border-left:4px solid #f49634">
       Observations & Actions
       <span style="font-size:10px;font-weight:400;color:#999;margin-left:6px">${obs.length} observation(s) · ${allActs.length} action(s)</span>
-    </div>
+    </div>`;
 
-    <!-- LISTE OBS + ACTIONS -->
-    ${obs.map(o => {
-      let acts = getActions(o['ID_Observation']);
-      if (fEncodeur) acts = acts.filter(a => a['encoded_par'] === fEncodeur);
+  // ===== UN BLOC HTML PAR OBSERVATION (pour mesure + pagination) =====
+  function renderObsBlock(o) {
+    let acts = getActions(o['ID_Observation']);
+    if (fEncodeur) acts = acts.filter(a => a['encoded_par'] === fEncodeur);
 
-      // % réalisé (quantité totale des actions / quantité de référence de l'observation)
-      // — même formule que l'écran "Observation" (renderObservation).
-      const qteRef = parseFloat(o['Quantité']);
-      const totalReal = acts.reduce((s,a)=>s+(parseFloat(a['Quantite_realisee'])||0),0);
-      const pct = (!isNaN(qteRef)&&qteRef>0) ? Math.round((totalReal/qteRef)*100) : null;
-      const pctColor = pct===null?'#999':pct>=100?'#22c55e':pct>=67?'#f49634':pct>=34?'#f59e0b':'#ef4444';
-      const pctBadge = pct!==null ? '<span style="display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:5px;border:1px solid '+pctColor+';font-size:9px;font-weight:700;color:'+pctColor+';margin-left:8px">'+pct+'%<span style="font-weight:400;color:#999"> réalisé</span></span>' : '';
-      const qteLine = '<div style="font-size:10px;color:#666;margin-bottom:4px">Quantité : ' + (o['Quantité']||'—') + ' ' + (o['Unité']||'') + pctBadge + '</div>';
+    // % réalisé (quantité totale des actions / quantité de référence de l'observation)
+    // — même formule que l'écran "Observation" (renderObservation).
+    const qteRef = parseFloat(o['Quantité']);
+    const totalReal = acts.reduce((s,a)=>s+(parseFloat(a['Quantite_realisee'])||0),0);
+    const pct = (!isNaN(qteRef)&&qteRef>0) ? Math.round((totalReal/qteRef)*100) : null;
+    const pctColor = pct===null?'#999':pct>=100?'#22c55e':pct>=67?'#f49634':pct>=34?'#f59e0b':'#ef4444';
+    const pctBadge = pct!==null ? '<span style="display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:5px;border:1px solid '+pctColor+';font-size:9px;font-weight:700;color:'+pctColor+';margin-left:8px">'+pct+'%<span style="font-weight:400;color:#999"> réalisé</span></span>' : '';
+    const qteLine = '<div style="font-size:10px;color:#666;margin-bottom:4px">Quantité : ' + (o['Quantité']||'—') + ' ' + (o['Unité']||'') + pctBadge + '</div>';
 
-      // Regroupe les actions par année (la plus récente en premier), et par
-      // date décroissante au sein d'une même année.
-      function parseActDate(d) {
-        if (!d) return null;
-        const p = d.split('-');
-        return p.length === 3 ? new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0])) : null;
-      }
-      const yearGroups = {};
-      acts.forEach(a => {
-        const dt = parseActDate(a['Date']);
-        const y = dt ? String(dt.getFullYear()) : 'Sans date';
-        (yearGroups[y] = yearGroups[y] || []).push(a);
-      });
-      const years = Object.keys(yearGroups).filter(y => y !== 'Sans date').sort((a,b) => b.localeCompare(a));
-      if (yearGroups['Sans date']) years.push('Sans date');
+    // Regroupe les actions par année (la plus récente en premier), et par
+    // date décroissante au sein d'une même année.
+    function parseActDate(d) {
+      if (!d) return null;
+      const p = d.split('-');
+      return p.length === 3 ? new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0])) : null;
+    }
+    const yearGroups = {};
+    acts.forEach(a => {
+      const dt = parseActDate(a['Date']);
+      const y = dt ? String(dt.getFullYear()) : 'Sans date';
+      (yearGroups[y] = yearGroups[y] || []).push(a);
+    });
+    const years = Object.keys(yearGroups).filter(y => y !== 'Sans date').sort((a,b) => b.localeCompare(a));
+    if (yearGroups['Sans date']) years.push('Sans date');
 
-      function actionCard(a) {
-        return '<div style="margin-top:4px;padding:6px 10px;background:#fff;border-radius:4px;border:1px solid #e8e8e8;display:flex;gap:8px;align-items:flex-start">' +
-              '<div style="flex:1">' +
-                '<div style="display:flex;gap:6px;align-items:center;margin-bottom:2px;flex-wrap:wrap">' +
-                  '<span style="font-size:9px;font-weight:600;color:#f49634">' + (a['Date']||'—') + '</span>' +
-                  (a['WO'] ? '<span style="font-size:9px;color:#666">WO: ' + a['WO'] + '</span>' : '') +
-                  (a['encoded_par'] ? '<span style="font-size:9px;color:#666">· ' + a['encoded_par'] + '</span>' : '') +
-                  (a['OK_NOK'] ? '<span style="padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600;background:' + okColors(a['OK_NOK'],'light').bg + ';color:' + okColors(a['OK_NOK'],'light').fg + '">' + okLabel(a['OK_NOK']) + '</span>' : '') +
-                '</div>' +
-                '<div style="font-size:11px">' + (a['Description']||'—') + '</div>' +
-                (a['Remarques'] ? '<div style="font-size:10px;color:#888;margin-top:2px">' + a['Remarques'] + '</div>' : '') +
+    function actionCard(a) {
+      return '<div style="margin-top:4px;padding:6px 10px;background:#fff;border-radius:4px;border:1px solid #e8e8e8;display:flex;gap:8px;align-items:flex-start">' +
+            '<div style="flex:1">' +
+              '<div style="display:flex;gap:6px;align-items:center;margin-bottom:2px;flex-wrap:wrap">' +
+                '<span style="font-size:9px;font-weight:600;color:#f49634">' + (a['Date']||'—') + '</span>' +
+                (a['WO'] ? '<span style="font-size:9px;color:#666">WO: ' + a['WO'] + '</span>' : '') +
+                (a['encoded_par'] ? '<span style="font-size:9px;color:#666">· ' + a['encoded_par'] + '</span>' : '') +
+                (a['OK_NOK'] ? '<span style="padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600;background:' + okColors(a['OK_NOK'],'light').bg + ';color:' + okColors(a['OK_NOK'],'light').fg + '">' + okLabel(a['OK_NOK']) + '</span>' : '') +
               '</div>' +
-              (() => {
-                const slots = [];
-                for (let pi=1; pi<=3; pi++) {
-                  const url = a['photo_url_'+pi] || (pi===1 ? a['photo_url'] : '');
-                  const comment = a['photo_comment_'+pi] || '';
-                  if (url) slots.push({url, comment});
-                }
-                if (!slots.length) return '';
-                const batName = o ? (DB.batiments.find(b=>b['ID_Batiment']===o['ID_Batiment'])||{})['Nom']||'' : '';
-                const elemName = o ? (o['Élément']||'') : '';
-                return '<div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;max-width:'+(slots.length===1?'80px':'170px')+'">' +
-                  slots.map((p,i) =>
-                    '<div style="width:' + (slots.length===1?'72':'78') + 'px">' +
-                      '<div style="border-radius:4px;overflow:hidden;border:1px solid #e0e0e0">' +
-                        '<img src="'+p.url+'" style="width:100%;height:58px;object-fit:cover;display:block" crossorigin="anonymous">' +
-                        '<div style="background:rgba(0,0,0,0.78);padding:3px 4px">' +
-                          '<div style="font-size:7px;font-weight:700;color:#f49634;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + batName + '</div>' +
-                          '<div style="font-size:6.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + elemName + ' • ' + (a['Date']||'') + '</div>' +
-                          (p.comment ? '<div style="font-size:6px;color:#ccc;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.comment + '</div>' : '') +
-                        '</div>' +
+              '<div style="font-size:11px">' + (a['Description']||'—') + '</div>' +
+              (a['Remarques'] ? '<div style="font-size:10px;color:#888;margin-top:2px">' + a['Remarques'] + '</div>' : '') +
+            '</div>' +
+            (() => {
+              const slots = [];
+              for (let pi=1; pi<=3; pi++) {
+                const url = a['photo_url_'+pi] || (pi===1 ? a['photo_url'] : '');
+                const comment = a['photo_comment_'+pi] || '';
+                if (url) slots.push({url, comment});
+              }
+              if (!slots.length) return '';
+              const batName = o ? (DB.batiments.find(b=>b['ID_Batiment']===o['ID_Batiment'])||{})['Nom']||'' : '';
+              const elemName = o ? (o['Élément']||'') : '';
+              return '<div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;max-width:'+(slots.length===1?'80px':'170px')+'">' +
+                slots.map((p,i) =>
+                  '<div style="width:' + (slots.length===1?'72':'78') + 'px">' +
+                    '<div style="border-radius:4px;overflow:hidden;border:1px solid #e0e0e0">' +
+                      '<img src="'+p.url+'" style="width:100%;height:58px;object-fit:cover;display:block" crossorigin="anonymous">' +
+                      '<div style="background:rgba(0,0,0,0.78);padding:3px 4px">' +
+                        '<div style="font-size:7px;font-weight:700;color:#f49634;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + batName + '</div>' +
+                        '<div style="font-size:6.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + elemName + ' • ' + (a['Date']||'') + '</div>' +
+                        (p.comment ? '<div style="font-size:6px;color:#ccc;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.comment + '</div>' : '') +
                       '</div>' +
-                      '<div style="font-size:7px;color:#999;text-align:center;margin-top:1px">Photo '+(i+1)+'</div>' +
-                    '</div>'
-                  ).join('') +
-                '</div>';
-              })() +
-            '</div>';
-      }
+                    '</div>' +
+                    '<div style="font-size:7px;color:#999;text-align:center;margin-top:1px">Photo '+(i+1)+'</div>' +
+                  '</div>'
+                ).join('') +
+              '</div>';
+            })() +
+          '</div>';
+    }
 
-      const actionsHtml = acts.length === 0 ? '<div style="font-size:10px;color:#aaa;font-style:italic">Aucune action</div>' :
-        years.map(y => {
-          const yActs = yearGroups[y].slice().sort((a,b) => {
-            const da = parseActDate(a['Date']), db = parseActDate(b['Date']);
-            if (!da && !db) return 0; if (!da) return 1; if (!db) return -1;
-            return db - da;
-          });
-          return '<div style="font-size:9px;font-weight:700;color:#f49634;text-transform:uppercase;letter-spacing:.4px;margin-top:6px;margin-bottom:2px">' + y + ' <span style="font-weight:400;color:#999;text-transform:none">(' + yActs.length + ' action' + (yActs.length>1?'s':'') + ')</span></div>' +
-            yActs.map(actionCard).join('');
-        }).join('');
+    const actionsHtml = acts.length === 0 ? '<div style="font-size:10px;color:#aaa;font-style:italic">Aucune action</div>' :
+      years.map(y => {
+        const yActs = yearGroups[y].slice().sort((a,b) => {
+          const da = parseActDate(a['Date']), db = parseActDate(b['Date']);
+          if (!da && !db) return 0; if (!da) return 1; if (!db) return -1;
+          return db - da;
+        });
+        return '<div style="font-size:9px;font-weight:700;color:#f49634;text-transform:uppercase;letter-spacing:.4px;margin-top:6px;margin-bottom:2px">' + y + ' <span style="font-weight:400;color:#999;text-transform:none">(' + yActs.length + ' action' + (yActs.length>1?'s':'') + ')</span></div>' +
+          yActs.map(actionCard).join('');
+      }).join('');
 
-      return '<div style="margin-bottom:4mm;padding:8px 12px;background:#fafafa;border-radius:6px;border:1px solid #e0e0e0;page-break-inside:avoid">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">' +
-          '<div style="font-size:12px;font-weight:600">' + (o['Élément']||o['ID_Observation']) + '</div>' +
-          '<div style="display:flex;gap:4px;align-items:center">' +
-            '<span style="font-size:9px;color:#999;margin-right:2px">P'+o['Priorité']+'</span>' +
-            nenBadge(o['État']) +
-            '<span style="font-size:9px;color:#999;margin:0 2px">→</span>' +
-            nenBadge(calcEtatProjete(o)) +
-          '</div>' +
+    return '<div style="margin-bottom:4mm;padding:8px 12px;background:#fafafa;border-radius:6px;border:1px solid #e0e0e0">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">' +
+        '<div style="font-size:12px;font-weight:600">' + (o['Élément']||o['ID_Observation']) + '</div>' +
+        '<div style="display:flex;gap:4px;align-items:center">' +
+          '<span style="font-size:9px;color:#999;margin-right:2px">P'+o['Priorité']+'</span>' +
+          nenBadge(o['État']) +
+          '<span style="font-size:9px;color:#999;margin:0 2px">→</span>' +
+          nenBadge(calcEtatProjete(o)) +
         '</div>' +
-        qteLine +
-        (o['Procédure'] ? '<div style="font-size:10px;color:#666;margin-bottom:4px">' + o['Procédure'] + '</div>' : '') +
-        actionsHtml +
-      '</div>';
-    }).join('')}
+      '</div>' +
+      qteLine +
+      (o['Procédure'] ? '<div style="font-size:10px;color:#666;margin-bottom:4px">' + o['Procédure'] + '</div>' : '') +
+      actionsHtml +
+    '</div>';
+  }
 
-    <!-- FOOTER -->
-    <div style="margin-top:6mm;padding-top:3mm;border-top:1px solid #e0e0e0;display:flex;justify-content:space-between;font-size:9px;color:#999">
+  const obsBlocksHtml = obs.map(renderObsBlock);
+
+  // ===== EN-TÊTE / PIED DE PAGE RÉPÉTÉS =====
+  function pageHeaderHtml() {
+    return `<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6mm;padding-bottom:4mm;border-bottom:3px solid #f49634">
+      <div>
+        <div style="font-size:20px;font-weight:800">NEN 2767 <span style="color:#f49634">AMAYFA</span></div>
+        <div style="font-size:10px;color:#666;margin-top:2px">Camp Adjudant Brasseur · Route Militaire 1A · Amay · ELU Service For You</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:13px;font-weight:700;color:#f49634">FICHE BÂTIMENT — ${b['Nom']||b['ID_Batiment']}</div>
+        <div style="font-size:10px;color:#666">${dateStr}</div>
+      </div>
+    </div>`;
+  }
+  function pageFooterHtml(pageNum, totalPages) {
+    return `<div style="margin-top:6mm;padding-top:3mm;border-top:1px solid #e0e0e0;display:flex;justify-content:space-between;font-size:9px;color:#999">
       <span>NEN 2767 AMAYFA</span>
-      <span>${dateStr}</span>
-    </div>
-  </div>`;
+      <span>Page ${pageNum} / ${totalPages}</span>
+    </div>`;
+  }
+  const headerHtml = pageHeaderHtml();
+
+  // ===== PAGINATION : mesure réelle du contenu rendu (pas d'estimation) =====
+  // On ne peut pas se fier aux marges @page ni aux compteurs CSS pour ce
+  // rapport (contenu en flux variable) : on calcule donc nous-mêmes combien
+  // d'observations tiennent par page A4, comme pour le rapport mensuel qui
+  // utilise des .pdf-page de taille fixe — mais ici la pagination est
+  // dynamique puisque le nombre d'observations varie selon le bâtiment.
+  const PAGE_W_MM = 210, PAGE_H_MM = 297, MARGIN_MM = 15;
+  const measureDiv = document.createElement('div');
+  measureDiv.style.cssText = `position:absolute;left:-9999px;top:0;width:${PAGE_W_MM - 2*MARGIN_MM}mm;font-family:Arial,sans-serif;box-sizing:border-box;visibility:hidden`;
+  document.body.appendChild(measureDiv);
+
+  function measure(htmlStr) {
+    measureDiv.innerHTML = htmlStr;
+    return measureDiv.offsetHeight;
+  }
+  // Convertit la hauteur de zone imprimable (mm) en px, dans le même
+  // contexte de rendu que les mesures ci-dessous (évite toute hypothèse de DPI).
+  measureDiv.style.height = (PAGE_H_MM - 2*MARGIN_MM) + 'mm';
+  const contentAreaPx = measureDiv.offsetHeight;
+  measureDiv.style.height = '';
+
+  const headerPx = measure(headerHtml);
+  const footerPx = measure(pageFooterHtml(1, 1));
+  const introPx = measure(introHtml);
+  const obsBlocksPx = obsBlocksHtml.map(measure);
+
+  document.body.removeChild(measureDiv);
+
+  // Regroupe intro + observations en pages, en respectant la hauteur imprimable réelle.
+  const pages = [];
+  let current = { items: [introHtml], height: headerPx + footerPx + introPx };
+  for (let i = 0; i < obsBlocksHtml.length; i++) {
+    const blockH = obsBlocksPx[i];
+    if (current.items.length > 0 && current.height + blockH > contentAreaPx) {
+      pages.push(current);
+      current = { items: [], height: headerPx + footerPx };
+    }
+    current.items.push(obsBlocksHtml[i]);
+    current.height += blockH;
+  }
+  pages.push(current);
+  const totalPages = pages.length;
+
+  const pagesHtml = pages.map((p, idx) => `
+    <div class="pdf-page" style="width:${PAGE_W_MM}mm;min-height:${PAGE_H_MM}mm;max-height:${PAGE_H_MM}mm;padding:${MARGIN_MM}mm;box-sizing:border-box;overflow:hidden;font-family:Arial,sans-serif;color:#1a1a1a;background:#fff">
+      ${headerHtml}
+      ${p.items.join('')}
+      ${pageFooterHtml(idx+1, totalPages)}
+    </div>`).join('');
 
   const reportDiv = document.getElementById('pdf-bat-report');
-  reportDiv.innerHTML = html;
+  reportDiv.innerHTML = pagesHtml;
   reportDiv.style.display = 'block';
   document.getElementById('app-page').style.display = 'none';
 
