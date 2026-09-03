@@ -2652,6 +2652,20 @@ function generateBatPDF(batId) {
 
 // ===== PDF VUE D'ENSEMBLE (A3 paysage : plan / dashboard / stats) =====
 function generateOverviewPDF() {
+  // Précharge le fond du plan (plan_fond.svg) avant de construire/imprimer :
+  // renderPlan() l'affiche via <image href="plan_fond.svg">, qui peut ne pas
+  // être encore chargé si l'utilisateur n'a jamais ouvert la vue Plan — sans
+  // cette attente, le fond risque de manquer sur la page imprimée.
+  const preload = new Image();
+  let started = false;
+  const start = () => { if (started) return; started = true; buildAndPrintOverviewPDF(); };
+  preload.onload = start;
+  preload.onerror = start;
+  preload.src = 'plan_fond.svg';
+  setTimeout(start, 1500); // filet de sécurité si l'image ne répond jamais
+}
+
+function buildAndPrintOverviewPDF() {
   const now = new Date();
   const dateStr = now.toLocaleDateString('fr-BE');
 
@@ -2659,12 +2673,17 @@ function generateOverviewPDF() {
   function nenFgP(n){return [1,2,3].includes(Math.round(parseFloat(n)))?'#1a1a1a':'#ffffff';}
 
   // ---- PAGE 1 : PLAN — on repeuple #plan-content (couleurs des bâtiments
-  // recalculées par renderPlan lui-même) puis on récupère le SVG déjà coloré,
-  // sans dupliquer la longue liste de polygones ici. ----
+  // recalculées par renderPlan lui-même), puis on récupère UNIQUEMENT le
+  // <svg> et la légende (pas le wrapper de scroll de l'écran, dont le
+  // overflow:auto/height:100% n'a pas de sens en impression et pouvait
+  // écraser le fond à 0 hauteur). ----
   renderPlan();
-  const planSvgHtml = document.getElementById('plan-content').innerHTML;
+  const planContentEl = document.getElementById('plan-content');
+  const svgHtml = planContentEl.querySelector('svg').outerHTML;
+  const legendEl = planContentEl.querySelector('#plan-scroll-area')?.nextElementSibling;
+  const legendHtml = legendEl ? legendEl.outerHTML : '';
 
-  // ---- Données communes par bâtiment (scores + actions) ----
+  // ---- Données par bâtiment (scores) ----
   const allObs = DB.observations;
   const avgInitial = allObs.length ? allObs.reduce((s,o)=>s+(parseFloat(o['État'])||0),0)/allObs.length : 0;
   const avgEstime  = allObs.length ? allObs.reduce((s,o)=>s+calcEtatProjete(o),0)/allObs.length : 0;
@@ -2672,16 +2691,13 @@ function generateOverviewPDF() {
 
   const batStats = DB.batiments.map(b => {
     const obs = getObs(b['ID_Batiment']);
-    const acts = obs.flatMap(o => getActions(o['ID_Observation']));
     const avgEtat = obs.length ? obs.reduce((s,o)=>s+(parseFloat(o['État'])||0),0)/obs.length : null;
     const avgProj = obs.length ? obs.reduce((s,o)=>s+calcEtatProjete(o),0)/obs.length : null;
     return {
-      id: b['ID_Batiment'], nom: b['Nom']||b['ID_Batiment'],
+      nom: b['Nom']||b['ID_Batiment'],
       avgEtat: avgEtat!==null ? Math.round(avgEtat*100)/100 : null,
       avgProj: avgProj!==null ? Math.round(avgProj*100)/100 : null,
-      nbObs: obs.length, nbAct: acts.length,
-      ok: acts.filter(a=>a['OK_NOK']?.toLowerCase()==='ok').length,
-      nok: acts.filter(a=>a['OK_NOK']?.toLowerCase()==='nok').length,
+      nbObs: obs.length,
     };
   }).filter(b => b.nbObs > 0).sort((a,b) => {
     const parse = s => { const m = s.nom.replace('Bâtiment ','').match(/^([A-Za-z]+)(\d+.*)?$/); return m ? [m[1]||'', parseInt(m[2])||0] : ['',0]; };
@@ -2689,7 +2705,7 @@ function generateOverviewPDF() {
     return la!==lb ? la.localeCompare(lb) : na-nb;
   });
 
-  // ---- PAGE 2 : scores par bâtiment (3 colonnes) ----
+  // ---- Scores par bâtiment (3 colonnes) ----
   const third = Math.ceil(batStats.length/3);
   const scoreCols = [batStats.slice(0,third), batStats.slice(third,third*2), batStats.slice(third*2)];
   function scoreColHtml(rows) {
@@ -2707,36 +2723,6 @@ function generateOverviewPDF() {
     </table>`;
   }
 
-  // ---- PAGE 3 : stats actions par bâtiment (2 colonnes) ----
-  const totalActs = DB.actions.length;
-  const totalOK = DB.actions.filter(a=>a['OK_NOK']?.toLowerCase()==='ok').length;
-  const totalNOK = DB.actions.filter(a=>a['OK_NOK']?.toLowerCase()==='nok').length;
-  const half = Math.ceil(batStats.length/2);
-  const statsCols = [batStats.slice(0,half), batStats.slice(half)];
-  function statsColHtml(rows) {
-    return `<table style="width:100%;border-collapse:collapse;font-size:11px">
-      <thead><tr style="background:#1a1a24;color:#fff">
-        <th style="padding:6px 8px;text-align:left">Bâtiment</th>
-        <th style="padding:6px 8px;text-align:center">Obs.</th>
-        <th style="padding:6px 8px;text-align:center">Actions</th>
-        <th style="padding:6px 8px;text-align:center">Terminé</th>
-        <th style="padding:6px 8px;text-align:center">En cours</th>
-        <th style="padding:6px 8px;text-align:center">%</th>
-      </tr></thead>
-      <tbody>${rows.map((b,i)=>{
-        const pct = b.nbAct ? Math.round((b.ok/b.nbAct)*100) : null;
-        return `<tr style="background:${i%2===0?'#fff':'#fafafa'}">
-          <td style="padding:5px 8px;font-weight:500">${b.nom}</td>
-          <td style="padding:5px 8px;text-align:center;color:#666">${b.nbObs}</td>
-          <td style="padding:5px 8px;text-align:center;font-weight:700;color:#f49634">${b.nbAct}</td>
-          <td style="padding:5px 8px;text-align:center;color:#22c55e;font-weight:600">${b.ok}</td>
-          <td style="padding:5px 8px;text-align:center;color:#ef4444;font-weight:600">${b.nok}</td>
-          <td style="padding:5px 8px;text-align:center;color:#666">${pct!==null?pct+'%':'—'}</td>
-        </tr>`;
-      }).join('')}</tbody>
-    </table>`;
-  }
-
   // ---- En-tête répété (numérotation sous la date, pas de pied de page — cf.
   // fiche bâtiment / rapport mensuel du 09/08). ----
   function pageHeaderHtml(title, pageNum) {
@@ -2748,7 +2734,7 @@ function generateOverviewPDF() {
       <div style="text-align:right">
         <div style="font-size:13px;font-weight:700;color:#f49634">${title}</div>
         <div style="font-size:10px;color:#666">${dateStr}</div>
-        <div style="font-size:10px;color:#999;margin-top:2px">Page ${pageNum} / 3</div>
+        <div style="font-size:10px;color:#999;margin-top:2px">Page ${pageNum} / 2</div>
       </div>
     </div>`;
   }
@@ -2766,7 +2752,10 @@ function generateOverviewPDF() {
 
   const page1 = `<div class="pdf-page" style="${pageStyle};display:flex;flex-direction:column">
     ${pageHeaderHtml('VUE PLAN', 1)}
-    <div style="flex:1;position:relative;min-height:0">${planSvgHtml}</div>
+    <div style="flex:1;position:relative;min-height:0;overflow:hidden">
+      ${svgHtml}
+      ${legendHtml}
+    </div>
   </div>`;
 
   const page2 = `<div class="pdf-page" style="${pageStyle}">
@@ -2790,21 +2779,8 @@ function generateOverviewPDF() {
     </div>
   </div>`;
 
-  const page3 = `<div class="pdf-page" style="${pageStyle}">
-    ${pageHeaderHtml('STATISTIQUES — ACTIONS PAR BÂTIMENT', 3)}
-    <div style="display:flex;gap:14px;margin-bottom:8mm">
-      ${kpiBox(totalActs, 'Actions totales', '#f49634')}
-      ${kpiBox(totalOK, 'Terminées', '#22c55e')}
-      ${kpiBox(totalNOK, 'En cours', '#ef4444')}
-      ${kpiBox(batStats.length, 'Bâtiments avec observations', '#6366f1')}
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-      ${statsCols.map(col=>`<div style="border:1px solid #e0e0e0;border-radius:6px;overflow:hidden">${statsColHtml(col)}</div>`).join('')}
-    </div>
-  </div>`;
-
   const reportDiv = document.getElementById('pdf-overview-report');
-  reportDiv.innerHTML = page1 + page2 + page3;
+  reportDiv.innerHTML = page1 + page2;
   reportDiv.style.display = 'block';
   document.getElementById('app-page').style.display = 'none';
 
