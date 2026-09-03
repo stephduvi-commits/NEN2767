@@ -330,6 +330,10 @@ select option{background:var(--surface);}
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
                 <span>Vue d'ensemble PDF (A3)</span>
               </button>
+              <button onclick="generateOverviewImages();toggleMainMenu()" style="width:100%;text-align:left;padding:8px 12px;background:transparent;border:none;border-radius:6px;cursor:pointer;font-size:13px;color:var(--text);font-family:'Inter',sans-serif;display:flex;align-items:center;gap:8px" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='transparent'">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span>Vue d'ensemble en images (PNG)</span>
+              </button>
               <button onclick="showView('users');toggleMainMenu()" style="width:100%;text-align:left;padding:8px 12px;background:transparent;border:none;border-radius:6px;cursor:pointer;font-size:13px;color:var(--text);font-family:'Inter',sans-serif;display:flex;align-items:center;gap:8px" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='transparent'">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 <span>Gestion utilisateurs</span>
@@ -2682,7 +2686,9 @@ function generateOverviewPDF() {
   setTimeout(start, 1500); // filet de sécurité si l'image ne répond jamais
 }
 
-function buildAndPrintOverviewPDF() {
+// Construit les 2 pages A3 paysage (HTML complet, inline) partagées par
+// l'export PDF (buildAndPrintOverviewPDF) et l'export images (buildAndDownloadOverviewImages).
+function buildOverviewPages() {
   const now = new Date();
   const dateStr = now.toLocaleDateString('fr-BE');
 
@@ -2796,19 +2802,68 @@ function buildAndPrintOverviewPDF() {
     </div>
   </div>`;
 
+  return { page1, page2 };
+}
+
+function buildAndPrintOverviewPDF() {
+  const { page1, page2 } = buildOverviewPages();
+
   const reportDiv = document.getElementById('pdf-overview-report');
   reportDiv.innerHTML = page1 + page2;
   reportDiv.style.display = 'block';
   document.getElementById('app-page').style.display = 'none';
 
-  setTimeout(() => {
+  waitForImages(reportDiv).then(() => {
     window.print();
     setTimeout(() => {
       reportDiv.style.display = 'none';
       reportDiv.innerHTML = '';
       document.getElementById('app-page').style.display = 'block';
     }, 1000);
-  }, 300);
+  });
+}
+
+// ===== EXPORT IMAGES (PNG) — mêmes 2 pages que le PDF, à insérer dans un
+// autre rapport (Word, PowerPoint, etc.) =====
+function generateOverviewImages() {
+  const preload = new Image();
+  let started = false;
+  const start = () => { if (started) return; started = true; buildAndDownloadOverviewImages(); };
+  preload.onload = start;
+  preload.onerror = start;
+  preload.src = 'plan_fond.svg';
+  setTimeout(start, 1500);
+}
+
+async function buildAndDownloadOverviewImages() {
+  if (!window.html2canvas) {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+    document.head.appendChild(s);
+    await new Promise(r => s.onload = r);
+  }
+
+  const { page1, page2 } = buildOverviewPages();
+
+  async function captureAndDownload(pageHtml, filename) {
+    // Rendu hors écran, taille identique à la page imprimée (420x297mm),
+    // puis capturé en canvas à résolution x2 pour une image nette.
+    const holder = document.createElement('div');
+    holder.style.cssText = 'position:fixed;left:-99999px;top:0;width:420mm;height:297mm;background:#fff';
+    holder.innerHTML = pageHtml;
+    document.body.appendChild(holder);
+    await waitForImages(holder);
+    const canvas = await html2canvas(holder, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+    document.body.removeChild(holder);
+
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
+
+  await captureAndDownload(page1, 'NEN2767_Vue_plan.png');
+  await captureAndDownload(page2, 'NEN2767_Vue_dashboard.png');
 }
 
 
