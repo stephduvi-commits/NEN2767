@@ -183,6 +183,14 @@ select option{background:var(--surface);}
      visible pendant l'impression (provoquait une page A4 blanche). */
   #pdf-bat-report { padding: 0; }
   #pdf-inner { width: 100%; margin: 0; padding: 0; }
+  /* Vue d'ensemble : A3 paysage (page nommée, ne change que la taille du
+     papier — pas de contenu de marge/compteur, seule la @page "size" est
+     fiable ici, cf. incident de numérotation du 09/08). */
+  @page overview_a3 {
+    size: A3 landscape;
+    margin: 12mm;
+  }
+  #pdf-overview-report { page: overview_a3; padding: 0; }
   .pdf-page {
     width: 100%;
     min-height: 0;
@@ -318,6 +326,10 @@ select option{background:var(--surface);}
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
                 <span>Présentation PowerPoint</span>
               </button>
+              <button onclick="generateOverviewPDF();toggleMainMenu()" style="width:100%;text-align:left;padding:8px 12px;background:transparent;border:none;border-radius:6px;cursor:pointer;font-size:13px;color:var(--text);font-family:'Inter',sans-serif;display:flex;align-items:center;gap:8px" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='transparent'">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                <span>Vue d'ensemble PDF (A3)</span>
+              </button>
               <button onclick="showView('users');toggleMainMenu()" style="width:100%;text-align:left;padding:8px 12px;background:transparent;border:none;border-radius:6px;cursor:pointer;font-size:13px;color:var(--text);font-family:'Inter',sans-serif;display:flex;align-items:center;gap:8px" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='transparent'">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 <span>Gestion utilisateurs</span>
@@ -389,6 +401,8 @@ select option{background:var(--surface);}
 <div id="pdf-report" style="display:none"></div>
 <!-- PDF BATIMENT -->
 <div id="pdf-bat-report" style="display:none"></div>
+<!-- PDF VUE D'ENSEMBLE (A3 paysage) -->
+<div id="pdf-overview-report" style="display:none"></div>
 
 <!-- MODAL INFO -->
 <div id="info-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center" onclick="if(event.target===this)closeInfo()">
@@ -2623,6 +2637,174 @@ function generateBatPDF(batId) {
 
   const reportDiv = document.getElementById('pdf-bat-report');
   reportDiv.innerHTML = pagesHtml;
+  reportDiv.style.display = 'block';
+  document.getElementById('app-page').style.display = 'none';
+
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => {
+      reportDiv.style.display = 'none';
+      reportDiv.innerHTML = '';
+      document.getElementById('app-page').style.display = 'block';
+    }, 1000);
+  }, 300);
+}
+
+// ===== PDF VUE D'ENSEMBLE (A3 paysage : plan / dashboard / stats) =====
+function generateOverviewPDF() {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('fr-BE');
+
+  function nenBgP(n){const m={1:'#70ad47',2:'#92d050',3:'#ffff00',4:'#ffc000',5:'#ff0000',6:'#c00000'};return m[Math.round(parseFloat(n))]||'#cccccc';}
+  function nenFgP(n){return [1,2,3].includes(Math.round(parseFloat(n)))?'#1a1a1a':'#ffffff';}
+
+  // ---- PAGE 1 : PLAN — on repeuple #plan-content (couleurs des bâtiments
+  // recalculées par renderPlan lui-même) puis on récupère le SVG déjà coloré,
+  // sans dupliquer la longue liste de polygones ici. ----
+  renderPlan();
+  const planSvgHtml = document.getElementById('plan-content').innerHTML;
+
+  // ---- Données communes par bâtiment (scores + actions) ----
+  const allObs = DB.observations;
+  const avgInitial = allObs.length ? allObs.reduce((s,o)=>s+(parseFloat(o['État'])||0),0)/allObs.length : 0;
+  const avgEstime  = allObs.length ? allObs.reduce((s,o)=>s+calcEtatProjete(o),0)/allObs.length : 0;
+  const rI = Math.round(avgInitial*100)/100, rE = Math.round(avgEstime*100)/100;
+
+  const batStats = DB.batiments.map(b => {
+    const obs = getObs(b['ID_Batiment']);
+    const acts = obs.flatMap(o => getActions(o['ID_Observation']));
+    const avgEtat = obs.length ? obs.reduce((s,o)=>s+(parseFloat(o['État'])||0),0)/obs.length : null;
+    const avgProj = obs.length ? obs.reduce((s,o)=>s+calcEtatProjete(o),0)/obs.length : null;
+    return {
+      id: b['ID_Batiment'], nom: b['Nom']||b['ID_Batiment'],
+      avgEtat: avgEtat!==null ? Math.round(avgEtat*100)/100 : null,
+      avgProj: avgProj!==null ? Math.round(avgProj*100)/100 : null,
+      nbObs: obs.length, nbAct: acts.length,
+      ok: acts.filter(a=>a['OK_NOK']?.toLowerCase()==='ok').length,
+      nok: acts.filter(a=>a['OK_NOK']?.toLowerCase()==='nok').length,
+    };
+  }).filter(b => b.nbObs > 0).sort((a,b) => {
+    const parse = s => { const m = s.nom.replace('Bâtiment ','').match(/^([A-Za-z]+)(\d+.*)?$/); return m ? [m[1]||'', parseInt(m[2])||0] : ['',0]; };
+    const [la,na] = parse(a), [lb,nb] = parse(b);
+    return la!==lb ? la.localeCompare(lb) : na-nb;
+  });
+
+  // ---- PAGE 2 : scores par bâtiment (3 colonnes) ----
+  const third = Math.ceil(batStats.length/3);
+  const scoreCols = [batStats.slice(0,third), batStats.slice(third,third*2), batStats.slice(third*2)];
+  function scoreColHtml(rows) {
+    return `<table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr style="background:#1a1a24;color:#fff">
+        <th style="padding:6px 10px;text-align:left">Bâtiment</th>
+        <th style="padding:6px 10px;text-align:center">État</th>
+        <th style="padding:6px 10px;text-align:center">Estimé</th>
+      </tr></thead>
+      <tbody>${rows.map((b,i)=>`<tr style="background:${i%2===0?'#fff':'#fafafa'}">
+        <td style="padding:5px 10px">${b.nom}</td>
+        <td style="padding:5px 10px;text-align:center"><span style="display:inline-block;min-width:26px;padding:2px 6px;border-radius:5px;background:${nenBgP(b.avgEtat)};color:${nenFgP(b.avgEtat)};font-weight:700">${b.avgEtat}</span></td>
+        <td style="padding:5px 10px;text-align:center"><span style="display:inline-block;min-width:26px;padding:2px 6px;border-radius:5px;background:${nenBgP(b.avgProj)};color:${nenFgP(b.avgProj)};font-weight:700">${b.avgProj}</span></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+
+  // ---- PAGE 3 : stats actions par bâtiment (2 colonnes) ----
+  const totalActs = DB.actions.length;
+  const totalOK = DB.actions.filter(a=>a['OK_NOK']?.toLowerCase()==='ok').length;
+  const totalNOK = DB.actions.filter(a=>a['OK_NOK']?.toLowerCase()==='nok').length;
+  const half = Math.ceil(batStats.length/2);
+  const statsCols = [batStats.slice(0,half), batStats.slice(half)];
+  function statsColHtml(rows) {
+    return `<table style="width:100%;border-collapse:collapse;font-size:11px">
+      <thead><tr style="background:#1a1a24;color:#fff">
+        <th style="padding:6px 8px;text-align:left">Bâtiment</th>
+        <th style="padding:6px 8px;text-align:center">Obs.</th>
+        <th style="padding:6px 8px;text-align:center">Actions</th>
+        <th style="padding:6px 8px;text-align:center">Terminé</th>
+        <th style="padding:6px 8px;text-align:center">En cours</th>
+        <th style="padding:6px 8px;text-align:center">%</th>
+      </tr></thead>
+      <tbody>${rows.map((b,i)=>{
+        const pct = b.nbAct ? Math.round((b.ok/b.nbAct)*100) : null;
+        return `<tr style="background:${i%2===0?'#fff':'#fafafa'}">
+          <td style="padding:5px 8px;font-weight:500">${b.nom}</td>
+          <td style="padding:5px 8px;text-align:center;color:#666">${b.nbObs}</td>
+          <td style="padding:5px 8px;text-align:center;font-weight:700;color:#f49634">${b.nbAct}</td>
+          <td style="padding:5px 8px;text-align:center;color:#22c55e;font-weight:600">${b.ok}</td>
+          <td style="padding:5px 8px;text-align:center;color:#ef4444;font-weight:600">${b.nok}</td>
+          <td style="padding:5px 8px;text-align:center;color:#666">${pct!==null?pct+'%':'—'}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+  }
+
+  // ---- En-tête répété (numérotation sous la date, pas de pied de page — cf.
+  // fiche bâtiment / rapport mensuel du 09/08). ----
+  function pageHeaderHtml(title, pageNum) {
+    return `<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6mm;padding-bottom:4mm;border-bottom:3px solid #f49634;flex-shrink:0">
+      <div>
+        <div style="font-size:20px;font-weight:800">NEN 2767 <span style="color:#f49634">AMAYFA</span></div>
+        <div style="font-size:10px;color:#666;margin-top:2px">Camp Adjudant Brasseur · Route Militaire 1A · Amay</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:13px;font-weight:700;color:#f49634">${title}</div>
+        <div style="font-size:10px;color:#666">${dateStr}</div>
+        <div style="font-size:10px;color:#999;margin-top:2px">Page ${pageNum} / 3</div>
+      </div>
+    </div>`;
+  }
+
+  function kpiBox(val, label, color, sub) {
+    return `<div style="flex:1;border:2px solid #e0e0e0;border-radius:8px;padding:14px;text-align:center">
+      <div style="font-size:28px;font-weight:800;color:${color}">${val}</div>
+      <div style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-top:4px">${label}</div>
+      ${sub?`<div style="font-size:10px;color:#999;margin-top:2px">${sub}</div>`:''}
+    </div>`;
+  }
+
+  const PAGE_W_MM = 420, PAGE_H_MM = 297, MARGIN_MM = 12; // A3 paysage
+  const pageStyle = `width:${PAGE_W_MM}mm;min-height:${PAGE_H_MM}mm;max-height:${PAGE_H_MM}mm;padding:${MARGIN_MM}mm;box-sizing:border-box;overflow:hidden;font-family:Arial,sans-serif;color:#1a1a1a;background:#fff`;
+
+  const page1 = `<div class="pdf-page" style="${pageStyle};display:flex;flex-direction:column">
+    ${pageHeaderHtml('VUE PLAN', 1)}
+    <div style="flex:1;position:relative;min-height:0">${planSvgHtml}</div>
+  </div>`;
+
+  const page2 = `<div class="pdf-page" style="${pageStyle}">
+    ${pageHeaderHtml("VUE DASHBOARD — SCORES BÂTIMENTS", 2)}
+    <div style="display:flex;gap:14px;margin-bottom:8mm">
+      ${kpiBox(rI, 'État global moyen initial', nenBgP(rI))}
+      ${kpiBox(rE, 'État global moyen estimé', nenBgP(rE), rE<rI?'↓ Amélioration':rE>rI?'↑ Dégradation':'= Stable')}
+      ${kpiBox(DB.actions.length, 'Actions réalisées', '#f49634')}
+      <div style="flex:1;border:2px solid #e0e0e0;border-radius:8px;padding:12px 14px">
+        <div style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;text-align:center">Légende — État NEN</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px">
+          ${[1,2,3,4,5,6].map(i=>`<div style="display:flex;align-items:center;gap:5px"><div style="width:18px;height:14px;border-radius:3px;background:${nenBgP(i)};flex-shrink:0"></div><span style="font-size:10px;color:#666">${i} ${nenLabel(i)}</span></div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div style="font-size:13px;font-weight:700;margin-bottom:4mm;padding-left:3px;border-left:4px solid #f49634">
+      Tous les bâtiments <span style="font-size:11px;font-weight:400;color:#999">(${batStats.length})</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+      ${scoreCols.map(col=>`<div style="border:1px solid #e0e0e0;border-radius:6px;overflow:hidden">${scoreColHtml(col)}</div>`).join('')}
+    </div>
+  </div>`;
+
+  const page3 = `<div class="pdf-page" style="${pageStyle}">
+    ${pageHeaderHtml('STATISTIQUES — ACTIONS PAR BÂTIMENT', 3)}
+    <div style="display:flex;gap:14px;margin-bottom:8mm">
+      ${kpiBox(totalActs, 'Actions totales', '#f49634')}
+      ${kpiBox(totalOK, 'Terminées', '#22c55e')}
+      ${kpiBox(totalNOK, 'En cours', '#ef4444')}
+      ${kpiBox(batStats.length, 'Bâtiments avec observations', '#6366f1')}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      ${statsCols.map(col=>`<div style="border:1px solid #e0e0e0;border-radius:6px;overflow:hidden">${statsColHtml(col)}</div>`).join('')}
+    </div>
+  </div>`;
+
+  const reportDiv = document.getElementById('pdf-overview-report');
+  reportDiv.innerHTML = page1 + page2 + page3;
   reportDiv.style.display = 'block';
   document.getElementById('app-page').style.display = 'none';
 
