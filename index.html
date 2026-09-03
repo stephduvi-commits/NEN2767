@@ -2835,6 +2835,31 @@ function generateOverviewImages() {
   setTimeout(start, 1500);
 }
 
+// html2canvas ne sait pas bien rasteriser un <image> SVG qui pointe vers un
+// AUTRE fichier .svg externe (contrairement à l'impression navigateur, qui
+// gère ça nativement) — le fond du plan disparaissait dans le PNG exporté.
+// On convertit donc plan_fond.svg en PNG (data URI) une fois, via un canvas,
+// et on substitue cette URI à la place du fichier .svg avant la capture.
+function rasterizePlanBackground() {
+  return new Promise(resolve => {
+    const img = new Image();
+    let done = false;
+    const finish = url => { if (!done) { done = true; resolve(url); } };
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || 4961;
+        canvas.height = img.naturalHeight || 3508;
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        finish(canvas.toDataURL('image/png'));
+      } catch (e) { finish(null); }
+    };
+    img.onerror = () => finish(null);
+    img.src = 'plan_fond.svg';
+    setTimeout(() => finish(null), 1500);
+  });
+}
+
 async function buildAndDownloadOverviewImages() {
   if (!window.html2canvas) {
     const s = document.createElement('script');
@@ -2843,7 +2868,9 @@ async function buildAndDownloadOverviewImages() {
     await new Promise(r => s.onload = r);
   }
 
-  const { page1, page2 } = buildOverviewPages();
+  let { page1, page2 } = buildOverviewPages();
+  const bgDataUrl = await rasterizePlanBackground();
+  if (bgDataUrl) page1 = page1.replace('href="plan_fond.svg"', `href="${bgDataUrl}"`);
 
   async function captureAndDownload(pageHtml, filename) {
     // Rendu hors écran, taille identique à la page imprimée (420x297mm),
