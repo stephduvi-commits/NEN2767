@@ -2826,38 +2826,119 @@ function buildAndPrintOverviewPDF() {
 // ===== EXPORT IMAGES (PNG) — mêmes 2 pages que le PDF, à insérer dans un
 // autre rapport (Word, PowerPoint, etc.) =====
 function generateOverviewImages() {
-  const preload = new Image();
-  let started = false;
-  const start = () => { if (started) return; started = true; buildAndDownloadOverviewImages(); };
-  preload.onload = start;
-  preload.onerror = start;
-  preload.src = 'plan_fond.svg';
-  setTimeout(start, 1500);
+  buildAndDownloadOverviewImages();
 }
 
-// html2canvas ne sait pas bien rasteriser un <image> SVG qui pointe vers un
-// AUTRE fichier .svg externe (contrairement à l'impression navigateur, qui
-// gère ça nativement) — le fond du plan disparaissait dans le PNG exporté.
-// On convertit donc plan_fond.svg en PNG (data URI) une fois, via un canvas,
-// et on substitue cette URI à la place du fichier .svg avant la capture.
-function rasterizePlanBackground() {
-  return new Promise(resolve => {
+function downloadCanvas(canvas, filename) {
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+// html2canvas ne sait pas rastériser un <image> SVG qui pointe vers un AUTRE
+// fichier .svg externe (contrairement à l'impression navigateur, qui gère ça
+// nativement) — le fond du plan disparaissait systématiquement du PNG
+// exporté, y compris après conversion en data URI. Plutôt que de dépendre
+// de html2canvas pour cette page, on la dessine nous-mêmes en Canvas 2D
+// (fond, cercles de score, légende, en-tête) — mêmes données que
+// renderPlan(), sans passer par le SVG intermédiaire.
+async function buildPlanCanvas() {
+  const VW = 4961, VH = 3508, HEADER_H = 260;
+
+  const bgImg = await new Promise(resolve => {
     const img = new Image();
-    let done = false;
-    const finish = url => { if (!done) { done = true; resolve(url); } };
-    img.onload = () => {
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.naturalWidth || 4961;
-        canvas.height = img.naturalHeight || 3508;
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        finish(canvas.toDataURL('image/png'));
-      } catch (e) { finish(null); }
-    };
-    img.onerror = () => finish(null);
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
     img.src = 'plan_fond.svg';
-    setTimeout(() => finish(null), 1500);
+    setTimeout(() => resolve(null), 3000);
   });
+
+  const canvas = document.createElement('canvas');
+  canvas.width = VW;
+  canvas.height = VH + HEADER_H;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // En-tête (même contenu que pageHeaderHtml('VUE PLAN', 1))
+  ctx.textBaseline = 'alphabetic';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#1a1a1a';
+  ctx.font = 'bold 64px Arial, sans-serif';
+  ctx.fillText('NEN 2767 ', 40, 100);
+  const titleW = ctx.measureText('NEN 2767 ').width;
+  ctx.fillStyle = '#f49634';
+  ctx.fillText('AMAYFA', 40 + titleW, 100);
+  ctx.fillStyle = '#666666';
+  ctx.font = '32px Arial, sans-serif';
+  ctx.fillText('Camp Adjudant Brasseur · Route Militaire 1A · Amay', 40, 150);
+
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#f49634';
+  ctx.font = 'bold 42px Arial, sans-serif';
+  ctx.fillText('VUE PLAN', VW - 40, 90);
+  ctx.fillStyle = '#666666';
+  ctx.font = '32px Arial, sans-serif';
+  ctx.fillText(new Date().toLocaleDateString('fr-BE'), VW - 40, 135);
+  ctx.fillStyle = '#999999';
+  ctx.font = '28px Arial, sans-serif';
+  ctx.fillText('Page 1 / 2', VW - 40, 175);
+
+  ctx.fillStyle = '#f49634';
+  ctx.fillRect(0, HEADER_H - 6, VW, 6);
+
+  if (bgImg) ctx.drawImage(bgImg, 0, HEADER_H, VW, VH);
+
+  // Scores par bâtiment — même calcul que renderPlan()
+  const batScores = {};
+  DB.batiments.forEach(b => {
+    const obs = getObs(b['ID_Batiment']); if (!obs.length) return;
+    const avgProj = obs.reduce((s,o)=>s+calcEtatProjete(o),0)/obs.length;
+    batScores[b['Nom']||b['ID_Batiment']] = Math.round(avgProj*10)/10;
+  });
+  Object.entries(BAT_MAP).forEach(([name, data]) => {
+    const score = batScores[name];
+    if (score === undefined) return;
+    const cy = data.cy + HEADER_H;
+    ctx.beginPath();
+    ctx.arc(data.cx, cy, 28, 0, Math.PI*2);
+    ctx.fillStyle = nenBg(score);
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+    ctx.stroke();
+    ctx.fillStyle = nenTextColor(score);
+    ctx.font = 'bold 26px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(score), data.cx, cy + 2);
+  });
+
+  // Légende (haut droit de la carte)
+  const lx = VW - 620, ly = HEADER_H + 30, lw = 580, rowH = 58, lh = 60 + rowH*6;
+  ctx.fillStyle = 'rgba(22,22,31,0.95)';
+  if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(lx, ly, lw, lh, 20); ctx.fill(); }
+  else ctx.fillRect(lx, ly, lw, lh);
+  ctx.fillStyle = '#8b93a6';
+  ctx.font = '600 26px Arial, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText('ÉTAT PROJETÉ', lx + 30, ly + 45);
+  for (let i=1;i<=6;i++) {
+    const cy2 = ly + 80 + (i-1)*rowH;
+    ctx.beginPath();
+    ctx.arc(lx + 50, cy2, 20, 0, Math.PI*2);
+    ctx.fillStyle = nenBg(i);
+    ctx.fill();
+    ctx.fillStyle = '#ccc';
+    ctx.font = '26px Arial, sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(i + ' — ' + nenLabel(i), lx + 85, cy2 + 2);
+  }
+
+  return canvas;
 }
 
 async function buildAndDownloadOverviewImages() {
@@ -2868,29 +2949,21 @@ async function buildAndDownloadOverviewImages() {
     await new Promise(r => s.onload = r);
   }
 
-  let { page1, page2 } = buildOverviewPages();
-  const bgDataUrl = await rasterizePlanBackground();
-  if (bgDataUrl) page1 = page1.replace('href="plan_fond.svg"', `href="${bgDataUrl}"`);
+  const { page2 } = buildOverviewPages();
 
-  async function captureAndDownload(pageHtml, filename) {
-    // Rendu hors écran, taille identique à la page imprimée (420x297mm),
-    // puis capturé en canvas à résolution x2 pour une image nette.
-    const holder = document.createElement('div');
-    holder.style.cssText = 'position:fixed;left:-99999px;top:0;width:420mm;height:297mm;background:#fff';
-    holder.innerHTML = pageHtml;
-    document.body.appendChild(holder);
-    await waitForImages(holder);
-    const canvas = await html2canvas(holder, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
-    document.body.removeChild(holder);
+  const planCanvas = await buildPlanCanvas();
+  downloadCanvas(planCanvas, 'NEN2767_Vue_plan.png');
 
-    const link = document.createElement('a');
-    link.download = filename;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-  }
-
-  await captureAndDownload(page1, 'NEN2767_Vue_plan.png');
-  await captureAndDownload(page2, 'NEN2767_Vue_dashboard.png');
+  // Dashboard : rendu HTML classique, html2canvas s'en sort bien ici
+  // (pas de SVG imbriqué, uniquement tableaux/texte).
+  const holder = document.createElement('div');
+  holder.style.cssText = 'position:fixed;left:-99999px;top:0;width:420mm;height:297mm;background:#fff';
+  holder.innerHTML = page2;
+  document.body.appendChild(holder);
+  await waitForImages(holder);
+  const dashCanvas = await html2canvas(holder, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+  document.body.removeChild(holder);
+  downloadCanvas(dashCanvas, 'NEN2767_Vue_dashboard.png');
 }
 
 
