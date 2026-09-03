@@ -2374,6 +2374,23 @@ async function renderUsers(){
   }
 }
 
+// Attend que les <img> d'un conteneur soient chargées (ou en échec) avant de
+// lancer l'impression — sans ça, les photos hébergées sur Supabase peuvent
+// ne pas être encore arrivées quand window.print() se déclenche (l'appareil
+// affiche alors des cadres vides, et il fallait relancer une 2e fois pour
+// que le navigateur les serve depuis son cache). Un délai de sécurité borne
+// l'attente pour ne jamais bloquer l'impression indéfiniment.
+function waitForImages(container, maxWaitMs = 4000) {
+  const imgs = Array.from(container.querySelectorAll('img'));
+  if (!imgs.length) return Promise.resolve();
+  const settled = Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(resolve => {
+    img.addEventListener('load', resolve, { once: true });
+    img.addEventListener('error', resolve, { once: true });
+  })));
+  const timeout = new Promise(resolve => setTimeout(resolve, maxWaitMs));
+  return Promise.race([settled, timeout]);
+}
+
 // ===== EXPORT XLS =====
 function generateBatPDF(batId) {
   const b = DB.batiments.find(x => x['ID_Batiment'] === batId);
@@ -2640,14 +2657,14 @@ function generateBatPDF(batId) {
   reportDiv.style.display = 'block';
   document.getElementById('app-page').style.display = 'none';
 
-  setTimeout(() => {
+  waitForImages(reportDiv).then(() => {
     window.print();
     setTimeout(() => {
       reportDiv.style.display = 'none';
       reportDiv.innerHTML = '';
       document.getElementById('app-page').style.display = 'block';
     }, 1000);
-  }, 300);
+  });
 }
 
 // ===== PDF VUE D'ENSEMBLE (A3 paysage : plan / dashboard / stats) =====
@@ -3123,14 +3140,14 @@ function generatePDF(selectedMonth, selectedYear) {
   reportDiv.style.display = 'block';
   document.getElementById('app-page').style.display = 'none';
 
-  setTimeout(() => {
+  waitForImages(reportDiv).then(() => {
     window.print();
     setTimeout(() => {
       reportDiv.style.display = 'none';
       reportDiv.innerHTML = '';
       document.getElementById('app-page').style.display = 'block';
     }, 1000);
-  }, 300);
+  });
 }
 
 async function generatePPTX() {
