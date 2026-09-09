@@ -15,6 +15,8 @@
   --bg:#0f0f13;--surface:#16161f;--border:#1e1e2a;--border2:#2a2a3a;
   --text:#e8e6f0;--muted:#6b6b85;--accent:#f49634;
   --green:#22c55e;--red:#ef4444;--orange:#f97316;--yellow:#eab308;
+  --warning-bg:#2a1e10;--warning-border:#3a2a18;
+  --danger-bg:#2e1a1a;--danger-border:#4a2a2a;
 }
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 .app{display:flex;flex-direction:column;min-height:100vh;}
@@ -93,7 +95,7 @@ select option{background:var(--surface);}
 .btn-primary:hover{background:#d4801e;}
 .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border2);}
 .btn-ghost:hover{color:var(--text);}
-.btn-warning{background:#2a1e10;color:var(--orange);border:1px solid #3a2a18;}
+.btn-warning{background:var(--warning-bg);color:var(--orange);border:1px solid var(--warning-border);}
 .btn-sm{padding:5px 10px;font-size:11px;}
 .form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
 .success-msg{padding:10px 14px;background:#1a2e1a;border:1px solid #2a4a2a;border-radius:8px;color:var(--green);font-size:13px;margin-bottom:12px;display:none;}
@@ -215,6 +217,10 @@ select option{background:var(--surface);}
   --accent: #f49634;
   --green: #16a34a;
   --red: #dc2626;
+  --warning-bg: #fff3e0;
+  --warning-border: #ffd9a0;
+  --danger-bg: #fee2e2;
+  --danger-border: #fca5a5;
 }
 [data-theme="light"] .topbar { background:#ffffff; }
 [data-theme="light"] .sidebar { background:#ffffff; }
@@ -1235,7 +1241,7 @@ function renderObservation(){
             })()}</td>
             <td style="color:var(--muted);font-size:11px">${a['encoded_par']||'—'}</td>
             <td><button class="btn btn-sm" onclick="openActionDetail('${a['ID_Action']}')" style="background:var(--bg);border:1px solid var(--border2);color:transparent" title="Ouvrir"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></td>
-            ${canEdit?`<td><button class="btn btn-warning btn-sm" onclick="openEditModal('${a['ID_Action']}')" style="color:transparent" title="Modifier"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></td><td><button class="btn btn-sm" style="background:#2e1a1a;border:1px solid #4a2a2a;color:transparent" onclick="deleteAction('${a['ID_Action']}')" title="Supprimer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td>`:''}
+            ${canEdit?`<td><button class="btn btn-warning btn-sm" onclick="openEditModal('${a['ID_Action']}')" style="color:transparent" title="Modifier"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></td><td><button class="btn btn-sm" style="background:var(--danger-bg);border:1px solid var(--danger-border);color:transparent" onclick="deleteAction('${a['ID_Action']}')" title="Supprimer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f49634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td>`:''}
           </tr>`).join('')}
         </tbody>
       </table>
