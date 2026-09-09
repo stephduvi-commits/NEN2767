@@ -924,18 +924,22 @@ function _renderCal() {
   if (!pop) { pop = document.createElement('div'); pop.id = 'cal-popup'; }
   pop.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <button onclick="event.stopPropagation();_calNav(-1)" style="background:none;border:none;color:#e8e6f0;cursor:pointer;font-size:16px;padding:2px 8px">‹</button>
-      <span style="font-size:13px;font-weight:600;color:#e8e6f0">${monthNames[_calMonth]} ${_calYear}</span>
-      <button onclick="event.stopPropagation();_calNav(1)" style="background:none;border:none;color:#e8e6f0;cursor:pointer;font-size:16px;padding:2px 8px">›</button>
+      <button onclick="event.stopPropagation();_calNav(-1)" style="background:none;border:none;color:var(--text);cursor:pointer;font-size:16px;padding:2px 8px">‹</button>
+      <span style="font-size:13px;font-weight:600;color:var(--text)">${monthNames[_calMonth]} ${_calYear}</span>
+      <button onclick="event.stopPropagation();_calNav(1)" style="background:none;border:none;color:var(--text);cursor:pointer;font-size:16px;padding:2px 8px">›</button>
     </div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px">
-      ${['L','M','M','J','V','S','D'].map(j=>`<div style="text-align:center;font-size:11px;color:#6b6b85;padding:2px">${j}</div>`).join('')}
+      ${['L','M','M','J','V','S','D'].map(j=>`<div style="text-align:center;font-size:11px;color:var(--muted);padding:2px">${j}</div>`).join('')}
     </div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px">${cells}</div>
     <div style="text-align:center;margin-top:8px">
-      <button onclick="_calToday()" style="font-size:11px;background:none;border:1px solid #2a2a3a;border-radius:6px;padding:3px 10px;color:#6b6b85;cursor:pointer">Aujourd'hui</button>
+      <button onclick="_calToday()" style="font-size:11px;background:none;border:1px solid var(--border2);border-radius:6px;padding:3px 10px;color:var(--muted);cursor:pointer">Aujourd'hui</button>
     </div>`;
-  pop.style.cssText = 'position:fixed;z-index:9999;background:#16161f;border:1px solid #2a2a3a;border-radius:12px;padding:12px;box-shadow:0 8px 32px rgba(0,0,0,.6);width:220px;';
+  // Couleurs pilotées par les variables de thème (pas de valeurs codées en
+  // dur) : sinon le popup restait figé aux couleurs du mode sombre même en
+  // mode clair, où le texte (hérité de var(--text), clair->sombre) devenait
+  // invisible sur un fond resté sombre.
+  pop.style.cssText = 'position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:12px;box-shadow:0 8px 32px rgba(0,0,0,.6);width:220px;color:var(--text);';
   document.body.appendChild(pop);
   if (inp) {
     const r = inp.getBoundingClientRect();
