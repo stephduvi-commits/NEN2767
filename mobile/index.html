@@ -1366,6 +1366,13 @@ function pickPhotoSource(mode, index, source) {
 
 let _cameraStream = null;
 let _cameraPending = null;
+let _camVideoTrack = null;
+let _camZoomCaps = null;   // {min,max,step} when the device exposes native zoom (mostly Android Chrome)
+let _camZoom = 1;          // current zoom factor: native value, or 1..CAM_DIGITAL_MAX when emulated
+const CAM_DIGITAL_MAX = 3;
+let _pinchStartDist = null;
+let _pinchStartZoom = 1;
+let _camZoomLabelTimer = null;
 
 async function openInAppCamera(mode, index) {
   _cameraPending = { mode, index };
@@ -1374,7 +1381,8 @@ async function openInAppCamera(mode, index) {
   overlay.id = 'camera-overlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:#000;z-index:700;display:flex;flex-direction:column;';
   overlay.innerHTML = `
-    <video id="cam-video" autoplay playsinline muted style="flex:1;object-fit:cover;width:100%;min-height:0;"></video>
+    <video id="cam-video" autoplay playsinline muted style="flex:1;object-fit:cover;width:100%;min-height:0;touch-action:none;"></video>
+    <div id="cam-zoom-label" style="position:absolute;top:calc(16px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);background:rgba(0,0,0,.55);color:#fff;font-size:14px;font-weight:600;padding:6px 14px;border-radius:20px;opacity:0;transition:opacity .15s;pointer-events:none;">1.0x</div>
     <div style="background:#111;padding:16px 20px calc(16px + env(safe-area-inset-bottom));display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
       <button onclick="closeCameraOverlay(true)" style="width:52px;height:52px;background:#2a2a3a;border:none;border-radius:50%;color:#e8e6f0;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
       <button onclick="captureFromCamera()" style="width:72px;height:72px;background:transparent;border:4px solid #fff;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;">
@@ -1391,6 +1399,18 @@ async function openInAppCamera(mode, index) {
     });
     const video = document.getElementById('cam-video');
     if (video) video.srcObject = _cameraStream;
+
+    _camVideoTrack = _cameraStream.getVideoTracks()[0];
+    _camZoomCaps = null;
+    _camZoom = 1;
+    try {
+      const caps = _camVideoTrack.getCapabilities ? _camVideoTrack.getCapabilities() : null;
+      if (caps && caps.zoom && caps.zoom.max > caps.zoom.min) {
+        _camZoomCaps = caps.zoom;
+        _camZoom = caps.zoom.min;
+      }
+    } catch(e) {}
+    if (video) setupCameraPinchZoom(video);
   } catch(e) {
     // Fallback to native file input when getUserMedia is unavailable/denied
     overlay.remove();
@@ -1408,15 +1428,72 @@ async function openInAppCamera(mode, index) {
   }
 }
 
+function touchDist(touches) {
+  const dx = touches[0].clientX - touches[1].clientX;
+  const dy = touches[0].clientY - touches[1].clientY;
+  return Math.hypot(dx, dy);
+}
+
+function setupCameraPinchZoom(video) {
+  video.addEventListener('touchstart', e => {
+    if (e.touches.length === 2) {
+      _pinchStartDist = touchDist(e.touches);
+      _pinchStartZoom = _camZoom;
+    }
+  }, { passive: true });
+  video.addEventListener('touchmove', e => {
+    if (e.touches.length === 2 && _pinchStartDist) {
+      e.preventDefault();
+      const dist = touchDist(e.touches);
+      applyCameraZoom(_pinchStartZoom * (dist / _pinchStartDist));
+    }
+  }, { passive: false });
+  video.addEventListener('touchend', e => {
+    if (e.touches.length < 2) _pinchStartDist = null;
+  });
+}
+
+function applyCameraZoom(z) {
+  if (_camZoomCaps) {
+    z = Math.min(_camZoomCaps.max, Math.max(_camZoomCaps.min, z));
+    _camZoom = z;
+    if (_camVideoTrack) _camVideoTrack.applyConstraints({ advanced: [{ zoom: z }] }).catch(()=>{});
+  } else {
+    z = Math.min(CAM_DIGITAL_MAX, Math.max(1, z));
+    _camZoom = z;
+    const video = document.getElementById('cam-video');
+    if (video) video.style.transform = `scale(${z})`;
+  }
+  const label = document.getElementById('cam-zoom-label');
+  if (label) {
+    label.textContent = _camZoom.toFixed(1) + 'x';
+    label.style.opacity = '1';
+    clearTimeout(_camZoomLabelTimer);
+    _camZoomLabelTimer = setTimeout(() => { label.style.opacity = '0'; }, 900);
+  }
+}
+
 function captureFromCamera() {
   const video = document.getElementById('cam-video');
   if (!video || !_cameraPending) return;
   const { mode, index } = _cameraPending;
 
+  const vw = video.videoWidth || 1280;
+  const vh = video.videoHeight || 720;
   const canvas = document.createElement('canvas');
-  canvas.width = video.videoWidth || 1280;
-  canvas.height = video.videoHeight || 720;
-  canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+  canvas.width = vw;
+  canvas.height = vh;
+  const ctx = canvas.getContext('2d');
+  if (!_camZoomCaps && _camZoom > 1) {
+    // Digital zoom: the native frame is unzoomed, so crop the centered region
+    // the user pinched to and stretch it back up to full resolution.
+    const cropW = vw / _camZoom, cropH = vh / _camZoom;
+    const sx = (vw - cropW) / 2, sy = (vh - cropH) / 2;
+    ctx.drawImage(video, sx, sy, cropW, cropH, 0, 0, vw, vh);
+  } else {
+    // Native zoom (Android) already produces a zoomed frame from the sensor.
+    ctx.drawImage(video, 0, 0, vw, vh);
+  }
 
   closeCameraOverlay(false);
 
@@ -1432,6 +1509,11 @@ function closeCameraOverlay(cancelled) {
     _cameraStream.getTracks().forEach(t => t.stop());
     _cameraStream = null;
   }
+  _camVideoTrack = null;
+  _camZoomCaps = null;
+  _camZoom = 1;
+  _pinchStartDist = null;
+  clearTimeout(_camZoomLabelTimer);
   document.getElementById('camera-overlay')?.remove();
   if (cancelled && _cameraPending) {
     const { mode, index } = _cameraPending;
