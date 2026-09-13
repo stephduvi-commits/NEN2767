@@ -8,6 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHJ4PSI1IiBmaWxsPSIjMWExYTI0Ii8+CiAgPHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjEyIiBoZWlnaHQ9IjEyIiByeD0iMiIgZmlsbD0iI2Y0OTYzNCIvPgogIDxyZWN0IHg9IjIiIHk9IjE3IiB3aWR0aD0iMTIiIGhlaWdodD0iMTIiIHJ4PSIyIiBmaWxsPSIjZjQ5NjM0IiBvcGFjaXR5PSIwLjU1Ii8+CiAgPHJlY3QgeD0iMTciIHk9IjIiIHdpZHRoPSIxMiIgaGVpZ2h0PSIxMiIgcng9IjIiIGZpbGw9IiNmNDk2MzQiIG9wYWNpdHk9IjAuNTUiLz4KICA8cmVjdCB4PSIxNyIgeT0iMTciIHdpZHRoPSIxMiIgaGVpZ2h0PSIxMiIgcng9IjIiIGZpbGw9IiNmNDk2MzQiIG9wYWNpdHk9IjAuMjUiLz4KICA8dGV4dCB4PSI4IiB5PSIxMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIEJsYWNrLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjkiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9IiMxYTFhMjQiPk48L3RleHQ+CiAgPHJlY3QgeD0iMCIgeT0iMjkiIHdpZHRoPSIzMiIgaGVpZ2h0PSIzIiByeD0iMS41IiBmaWxsPSIjZjQ5NjM0Ii8+Cjwvc3ZnPg==">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIHJ4PSI4MCIgZmlsbD0iIzFhMWEyNCIvPgogIDwhLS0gR3JpbGxlIDJ4MiAtLT4KICA8cmVjdCB4PSI4MCIgeT0iODAiIHdpZHRoPSIxNDgiIGhlaWdodD0iMTQ4IiByeD0iMjIiIGZpbGw9IiNmNDk2MzQiLz4KICA8cmVjdCB4PSI4MCIgeT0iMjQ4IiB3aWR0aD0iMTQ4IiBoZWlnaHQ9IjE0OCIgcng9IjIyIiBmaWxsPSIjZjQ5NjM0IiBvcGFjaXR5PSIwLjU1Ii8+CiAgPHJlY3QgeD0iMjQ4IiB5PSI4MCIgd2lkdGg9IjE0OCIgaGVpZ2h0PSIxNDgiIHJ4PSIyMiIgZmlsbD0iI2Y0OTYzNCIgb3BhY2l0eT0iMC41NSIvPgogIDxyZWN0IHg9IjI0OCIgeT0iMjQ4IiB3aWR0aD0iMTQ4IiBoZWlnaHQ9IjE0OCIgcng9IjIyIiBmaWxsPSIjZjQ5NjM0IiBvcGFjaXR5PSIwLjI1Ii8+CiAgPCEtLSBOIGRhbnMgcHJlbWllciBjYXJyw6kgLS0+CiAgPHRleHQgeD0iMTU0IiB5PSIxODUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCBCbGFjaywgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMDAiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9IiMxYTFhMjQiPk48L3RleHQ+CiAgPCEtLSBCYXJyZSBvcmFuZ2UgYmFzIC0tPgogIDxyZWN0IHg9IjAiIHk9IjQ4NCIgd2lkdGg9IjUxMiIgaGVpZ2h0PSIyOCIgcng9IjE0IiBmaWxsPSIjZjQ5NjM0Ii8+Cjwvc3ZnPg==">
 <link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="NEN2767">
@@ -21,7 +22,12 @@
   --green:#22c55e;--red:#ef4444;--orange:#f97316;
 }
 html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);}
-.screen{display:none;flex-direction:column;height:100vh;overflow:hidden;}
+/* padding-top pousse l'en-tête sous l'encoche/île dynamique iPhone (le
+   status bar "black-translucent" ci-dessous rend le contenu sous la barre
+   système) ; sans effet sur Android/desktop où la variable vaut 0. Le flex
+   container absorbe cet espace (flex:1 sur .content), donc pas besoin de
+   recalculer la hauteur. */
+.screen{display:none;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;padding-top:env(safe-area-inset-top);}
 .screen.active{display:flex;}
 
 /* HEADER */
@@ -38,7 +44,11 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 
 /* SEARCH */
 .search-wrap{padding:12px;background:var(--surface);border-bottom:1px solid var(--border);}
-.search-input{width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-family:'Inter',sans-serif;font-size:15px;outline:none;}
+/* font-size >= 16px sur tous les champs : en dessous, iOS Safari zoome
+   automatiquement la page au focus (et avec user-scalable=no dans le
+   <meta viewport>, l'utilisateur peut rester bloqué zoomé sans pouvoir
+   dézoomer au pincement). */
+.search-input{width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-family:'Inter',sans-serif;font-size:16px;outline:none;}
 .search-input::placeholder{color:var(--muted);}
 
 /* CARDS */
@@ -81,7 +91,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 /* FORMULAIRE */
 .form-group{margin-bottom:14px;}
 .form-group label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:6px;}
-.form-input{width:100%;padding:12px 14px;background:var(--surface);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-family:'Inter',sans-serif;font-size:15px;outline:none;transition:border-color 0.2s;}
+.form-input{width:100%;padding:12px 14px;background:var(--surface);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-family:'Inter',sans-serif;font-size:16px;outline:none;transition:border-color 0.2s;-webkit-appearance:none;appearance:none;}
 .form-input:focus{border-color:var(--accent);}
 .form-input[disabled]{opacity:0.5;}
 textarea.form-input{resize:none;min-height:80px;}
@@ -110,7 +120,7 @@ select.form-input option{background:var(--surface);}
 .action-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
 
 /* LOGIN */
-.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:var(--bg);}
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;min-height:100dvh;padding:20px;padding-top:calc(20px + env(safe-area-inset-top));padding-bottom:calc(20px + env(safe-area-inset-bottom));background:var(--bg);}
 .login-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px 24px;width:100%;max-width:380px;}
 .login-logo{text-align:center;margin-bottom:24px;}
 .login-title{font-size:22px;font-weight:800;color:var(--accent);margin-top:12px;}
@@ -118,7 +128,7 @@ select.form-input option{background:var(--surface);}
 .login-error{background:#2e1a1a;border:1px solid #4a2a2a;border-radius:8px;padding:10px 14px;color:var(--red);font-size:13px;margin-bottom:14px;display:none;}
 
 /* FAB */
-.fab{position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;background:var(--accent);border:none;color:#fff;font-size:24px;cursor:pointer;box-shadow:0 4px 16px rgba(244,150,52,0.4);display:flex;align-items:center;justify-content:center;z-index:50;}
+.fab{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));right:calc(24px + env(safe-area-inset-right));width:56px;height:56px;border-radius:50%;background:var(--accent);border:none;color:#fff;font-size:24px;cursor:pointer;box-shadow:0 4px 16px rgba(244,150,52,0.4);display:flex;align-items:center;justify-content:center;z-index:50;}
 .fab:active{background:#d4801e;transform:scale(0.95);}
 
 /* LOADING */
@@ -134,7 +144,7 @@ select.form-input option{background:var(--surface);}
 .lightbox{position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:200;display:none;align-items:center;justify-content:center;}
 .lightbox.open{display:flex;}
 .lightbox img{max-width:95vw;max-height:90vh;border-radius:8px;object-fit:contain;}
-.lightbox-close{position:fixed;top:16px;right:16px;color:#fff;font-size:28px;cursor:pointer;z-index:201;}
+.lightbox-close{position:fixed;top:calc(16px + env(safe-area-inset-top));right:calc(16px + env(safe-area-inset-right));color:#fff;font-size:28px;cursor:pointer;z-index:201;}
 
 /* FILTER BAR */
 .filter-bar{display:flex;gap:8px;padding:8px 12px;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0;}
@@ -144,7 +154,7 @@ select.form-input option{background:var(--surface);}
 /* CALENDRIER */
 .cal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:400;display:none;align-items:flex-end;justify-content:center;}
 .cal-overlay.open{display:flex;}
-.cal-popup{background:var(--surface);border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:480px;box-shadow:0 -4px 24px rgba(0,0,0,.4);}
+.cal-popup{background:var(--surface);border-radius:16px 16px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom)) 20px;width:100%;max-width:480px;box-shadow:0 -4px 24px rgba(0,0,0,.4);}
 .cal-handle{width:40px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 16px;}
 .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
 .cal-nav{background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--text);width:36px;height:36px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;}
@@ -265,15 +275,15 @@ if ('serviceWorker' in navigator) {
   </div>
   <div style="padding:8px 12px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px;flex-shrink:0">
     <!-- Recherche -->
-    <input type="search" id="obs-search" class="form-input" placeholder="Rechercher une observation…" style="padding:8px 12px;font-size:13px" oninput="debouncedRenderObs()">
+    <input type="search" id="obs-search" class="form-input" placeholder="Rechercher une observation…" style="padding:8px 12px;font-size:16px" oninput="debouncedRenderObs()">
     <!-- Filtres -->
     <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px">
-      <select id="f-obs-actions" class="filter-btn active" onchange="renderObservations()" style="padding:6px 10px;border-radius:20px;font-size:12px;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:'Inter',sans-serif;cursor:pointer">
+      <select id="f-obs-actions" class="filter-btn active" onchange="renderObservations()" style="padding:6px 10px;border-radius:20px;font-size:16px;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:'Inter',sans-serif;cursor:pointer">
         <option value="all">Toutes</option>
         <option value="with">Avec actions</option>
         <option value="without">Sans action</option>
       </select>
-      <select id="f-obs-encodeur" class="filter-btn" onchange="renderObservations()" style="padding:6px 10px;border-radius:20px;font-size:12px;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:'Inter',sans-serif;cursor:pointer">
+      <select id="f-obs-encodeur" class="filter-btn" onchange="renderObservations()" style="padding:6px 10px;border-radius:20px;font-size:16px;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:'Inter',sans-serif;cursor:pointer">
         <option value="">Tous encodeurs</option>
       </select>
     </div>
@@ -1319,7 +1329,7 @@ function showPhotoSourcePicker(mode, index) {
   overlay.id = 'photo-picker-overlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;display:flex;align-items:flex-end;justify-content:center';
   overlay.innerHTML = `
-    <div style="background:var(--surface);border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:480px">
+    <div style="background:var(--surface);border-radius:16px 16px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom)) 20px;width:100%;max-width:480px">
       <div style="width:40px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 20px"></div>
       <div style="font-size:15px;font-weight:700;margin-bottom:16px">Photo ${index+1}</div>
       <button onclick="pickPhotoSource('${mode}',${index},'camera')" style="width:100%;padding:14px;background:#1a1e2e;color:#6366f1;border:1px dashed #6366f1;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px">
@@ -1365,7 +1375,7 @@ async function openInAppCamera(mode, index) {
   overlay.style.cssText = 'position:fixed;inset:0;background:#000;z-index:700;display:flex;flex-direction:column;';
   overlay.innerHTML = `
     <video id="cam-video" autoplay playsinline muted style="flex:1;object-fit:cover;width:100%;min-height:0;"></video>
-    <div style="background:#111;padding:16px 20px 32px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+    <div style="background:#111;padding:16px 20px calc(16px + env(safe-area-inset-bottom));display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
       <button onclick="closeCameraOverlay(true)" style="width:52px;height:52px;background:#2a2a3a;border:none;border-radius:50%;color:#e8e6f0;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
       <button onclick="captureFromCamera()" style="width:72px;height:72px;background:transparent;border:4px solid #fff;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;">
         <div style="width:58px;height:58px;background:#f49634;border-radius:50%;"></div>
@@ -1612,7 +1622,7 @@ function deleteAction(actionId) {
   overlay.id = 'delete-action-overlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;display:flex;align-items:flex-end;justify-content:center';
   overlay.innerHTML = `
-    <div style="background:var(--surface);border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:480px">
+    <div style="background:var(--surface);border-radius:16px 16px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom)) 20px;width:100%;max-width:480px">
       <div style="width:40px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 20px"></div>
       <div style="text-align:center;margin-bottom:16px">
         <div style="width:52px;height:52px;border-radius:50%;background:#2e1a1a;border:2px solid #7f1d1d;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
@@ -1673,7 +1683,7 @@ async function shareAction(actionId) {
       await navigator.clipboard.writeText(text);
       const tmp = document.createElement('div');
       tmp.textContent = '✓ Résumé copié dans le presse-papier';
-      tmp.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a2e1a;color:#22c55e;border:1px solid #2a4a2a;border-radius:8px;padding:10px 16px;font-size:13px;font-weight:500;z-index:999;white-space:nowrap';
+      tmp.style.cssText = 'position:fixed;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#1a2e1a;color:#22c55e;border:1px solid #2a4a2a;border-radius:8px;padding:10px 16px;font-size:13px;font-weight:500;z-index:999;white-space:nowrap';
       document.body.appendChild(tmp);
       setTimeout(() => tmp.remove(), 2500);
     } catch(e) {
@@ -1986,7 +1996,7 @@ _supabasePingTimer = setInterval(checkSupabaseConnection, 30000);
 </script>
 <!-- APP INFO BOTTOM SHEET -->
 <div id="app-info-overlay" onclick="if(event.target===this)closeAppInfo()" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;align-items:flex-end;justify-content:center">
-  <div style="background:var(--surface);border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:480px;box-shadow:0 -4px 24px rgba(0,0,0,.4)">
+  <div style="background:var(--surface);border-radius:16px 16px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom)) 20px;width:100%;max-width:480px;box-shadow:0 -4px 24px rgba(0,0,0,.4)">
     <div style="width:40px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 20px"></div>
 
     <!-- En-tête -->
