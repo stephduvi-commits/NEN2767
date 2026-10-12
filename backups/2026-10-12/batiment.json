@@ -1,0 +1,604 @@
+[
+  {
+    "id_batiment": "BAT-001",
+    "code_objet": "Proj 95-A1",
+    "etat_batiment": 4,
+    "nom": "Bâtiment A1",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-002",
+    "code_objet": "Proj 95-A10",
+    "etat_batiment": 3,
+    "nom": "Bâtiment A10",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-003",
+    "code_objet": "Proj 95-A11",
+    "etat_batiment": 4,
+    "nom": "Bâtiment A11",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-004",
+    "code_objet": "Proj 95-A12",
+    "etat_batiment": 4,
+    "nom": "Bâtiment A12",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-005",
+    "code_objet": "Proj 95-A2",
+    "etat_batiment": 3,
+    "nom": "Bâtiment A2",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-006",
+    "code_objet": "Proj 95-A3",
+    "etat_batiment": 3,
+    "nom": "Bâtiment A3",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-007",
+    "code_objet": "Proj 95-A6",
+    "etat_batiment": 3,
+    "nom": "Bâtiment A6",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-008",
+    "code_objet": "Proj 95-A7",
+    "etat_batiment": 3,
+    "nom": "Bâtiment A7",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-009",
+    "code_objet": "Proj 95-A8",
+    "etat_batiment": 3,
+    "nom": "Bâtiment A8",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-010",
+    "code_objet": "Proj 95-A9",
+    "etat_batiment": 3,
+    "nom": "Bâtiment A9",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-011",
+    "code_objet": "Proj 95-B1",
+    "etat_batiment": 3,
+    "nom": "Bâtiment B1",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-012",
+    "code_objet": "Proj 95-B10",
+    "etat_batiment": 4,
+    "nom": "Bâtiment B10",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-013",
+    "code_objet": "Proj 95-B14",
+    "etat_batiment": 4,
+    "nom": "Bâtiment B14",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-014",
+    "code_objet": "Proj 95-B2",
+    "etat_batiment": 4,
+    "nom": "Bâtiment B2",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-015",
+    "code_objet": "2",
+    "etat_batiment": 2,
+    "nom": "Bâtiment B3",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-016",
+    "code_objet": "Proj 95-C1",
+    "etat_batiment": 4,
+    "nom": "Bâtiment C1",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-017",
+    "code_objet": "Proj 95-C10",
+    "etat_batiment": 3,
+    "nom": "Bâtiment C10",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-018",
+    "code_objet": "Proj 95-C11",
+    "etat_batiment": 5,
+    "nom": "Bâtiment C11",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-019",
+    "code_objet": "Proj 95-C12",
+    "etat_batiment": 4,
+    "nom": "Bâtiment C12",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-020",
+    "code_objet": "Proj 95-C13",
+    "etat_batiment": 4,
+    "nom": "Bâtiment C13",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-021",
+    "code_objet": "Proj 95-C14",
+    "etat_batiment": 4,
+    "nom": "Bâtiment C14",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-022",
+    "code_objet": "Proj 95-C15",
+    "etat_batiment": 6,
+    "nom": "Bâtiment C15",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-023",
+    "code_objet": "Proj 95-C2",
+    "etat_batiment": 3,
+    "nom": "Bâtiment C2",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-024",
+    "code_objet": "Proj 95-C24",
+    "etat_batiment": 6,
+    "nom": "Bâtiment C24",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-025",
+    "code_objet": "Proj 95-C8",
+    "etat_batiment": 3,
+    "nom": "Bâtiment C8",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-026",
+    "code_objet": "Proj 95-D1",
+    "etat_batiment": 5,
+    "nom": "Bâtiment D1 cabine HT",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-027",
+    "code_objet": "Proj 95-D2",
+    "etat_batiment": 4,
+    "nom": "Bâtiment D2",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-028",
+    "code_objet": "Proj 95-D3",
+    "etat_batiment": 4,
+    "nom": "Bâtiment D3",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-029",
+    "code_objet": "Proj 95-E1",
+    "etat_batiment": 3,
+    "nom": "Bâtiment E1",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-030",
+    "code_objet": "Proj 95-E13",
+    "etat_batiment": 3,
+    "nom": "Bâtiment E13",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-031",
+    "code_objet": "Proj 95-E2",
+    "etat_batiment": 4,
+    "nom": "Bâtiment E2",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-032",
+    "code_objet": "Proj 95-E3",
+    "etat_batiment": 3,
+    "nom": "Bâtiment E3",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-033",
+    "code_objet": "Proj 95-E4",
+    "etat_batiment": 3,
+    "nom": "Bâtiment E4",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-034",
+    "code_objet": "Proj 95-E5",
+    "etat_batiment": 5,
+    "nom": "Bâtiment E5",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-035",
+    "code_objet": "Proj 95-E6",
+    "etat_batiment": 3,
+    "nom": "Bâtiment E6",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-036",
+    "code_objet": "Proj 95-F1",
+    "etat_batiment": 3,
+    "nom": "Bâtiment F1",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-037",
+    "code_objet": "Proj 95-F10",
+    "etat_batiment": 3,
+    "nom": "Bâtiment F10",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-038",
+    "code_objet": "Proj 95-F13",
+    "etat_batiment": 3,
+    "nom": "Bâtiment F13",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-039",
+    "code_objet": "Proj 95-F15",
+    "etat_batiment": 3,
+    "nom": "Bâtiment F15",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-040",
+    "code_objet": "Proj 95-F18",
+    "etat_batiment": 4,
+    "nom": "Bâtiment F18",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-041",
+    "code_objet": "Proj 95-F2",
+    "etat_batiment": 3,
+    "nom": "Bâtiment F2",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-042",
+    "code_objet": "Proj 95-F20",
+    "etat_batiment": 4,
+    "nom": "Bâtiment F20",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-043",
+    "code_objet": "Proj 95-F21",
+    "etat_batiment": 4,
+    "nom": "Bâtiment F21",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-044",
+    "code_objet": "Proj 95-F3",
+    "etat_batiment": 4,
+    "nom": "Bâtiment F3",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-045",
+    "code_objet": "Proj 95-F4",
+    "etat_batiment": 4,
+    "nom": "Bâtiment F4",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-046",
+    "code_objet": "Proj 95-F6",
+    "etat_batiment": 3,
+    "nom": "Bâtiment F6",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-047",
+    "code_objet": "Proj 95-G10",
+    "etat_batiment": 4,
+    "nom": "Bâtiment G10",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-048",
+    "code_objet": "Proj 95-G11",
+    "etat_batiment": 5,
+    "nom": "Bâtiment G11",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-049",
+    "code_objet": "Proj 95-G12",
+    "etat_batiment": 4,
+    "nom": "Bâtiment G12",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-050",
+    "code_objet": "Proj 95-G1A",
+    "etat_batiment": 1,
+    "nom": "Bâtiment G1A",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-051",
+    "code_objet": "Proj 95-G2",
+    "etat_batiment": 4,
+    "nom": "Bâtiment G2",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-052",
+    "code_objet": "Proj 95-G27",
+    "etat_batiment": 5,
+    "nom": "Bâtiment G27",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-053",
+    "code_objet": "Proj 95-G29",
+    "etat_batiment": 4,
+    "nom": "Bâtiment G29",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-054",
+    "code_objet": "Proj 95-G3",
+    "etat_batiment": 4,
+    "nom": "Bâtiment G3",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-055",
+    "code_objet": "Proj 95-G32",
+    "etat_batiment": 1,
+    "nom": "Bâtiment G32 - cabine HT",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-056",
+    "code_objet": "Proj 95-G4",
+    "etat_batiment": 4,
+    "nom": "Bâtiment G4",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-057",
+    "code_objet": "Proj 95-G6",
+    "etat_batiment": 5,
+    "nom": "Bâtiment G6",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-058",
+    "code_objet": "Proj 95-G7",
+    "etat_batiment": 4,
+    "nom": "Bâtiment G7",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-059",
+    "code_objet": "Proj 95-G8",
+    "etat_batiment": 5,
+    "nom": "Bâtiment G8",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-060",
+    "code_objet": "Proj 95-G9",
+    "etat_batiment": 3,
+    "nom": "Bâtiment G9",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-061",
+    "code_objet": "Proj 95-H1",
+    "etat_batiment": 5,
+    "nom": "Bâtiment H1",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-062",
+    "code_objet": "Proj 95-H2",
+    "etat_batiment": 5,
+    "nom": "Bâtiment H2",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-063",
+    "code_objet": "Proj 95-H3",
+    "etat_batiment": 5,
+    "nom": "Bâtiment H3",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-064",
+    "code_objet": "Proj 95-H5",
+    "etat_batiment": 4,
+    "nom": "Bâtiment H5",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-065",
+    "code_objet": "Proj 95-H6",
+    "etat_batiment": 6,
+    "nom": "Bâtiment H6",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-066",
+    "code_objet": "Proj 95-L2",
+    "etat_batiment": 3,
+    "nom": "Bâtiment L2",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-067",
+    "code_objet": "Proj 95-L3",
+    "etat_batiment": 3,
+    "nom": "Bâtiment L3",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-068",
+    "code_objet": "Proj 95-L4",
+    "etat_batiment": 3,
+    "nom": "Bâtiment L4",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-069",
+    "code_objet": "Proj 95-L5",
+    "etat_batiment": 3,
+    "nom": "Bâtiment L5",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-070",
+    "code_objet": "Proj 95-L6",
+    "etat_batiment": 4,
+    "nom": "Bâtiment L6",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-071",
+    "code_objet": "Proj 95-L7",
+    "etat_batiment": 3,
+    "nom": "Bâtiment L7",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-072",
+    "code_objet": "Proj 95-L8",
+    "etat_batiment": 3,
+    "nom": "Bâtiment L8",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-073",
+    "code_objet": "Proj 95-L9",
+    "etat_batiment": 3,
+    "nom": "Bâtiment L9",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-074",
+    "code_objet": "Proj 95-O1",
+    "etat_batiment": 2,
+    "nom": "Bâtiment O1",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-075",
+    "code_objet": "Proj 95-O2",
+    "etat_batiment": 3,
+    "nom": "Bâtiment O2",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-076",
+    "code_objet": "Proj 95-O3",
+    "etat_batiment": 2,
+    "nom": "Bâtiment O3",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-077",
+    "code_objet": "Proj 95-O4",
+    "etat_batiment": 3,
+    "nom": "Bâtiment O4",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-078",
+    "code_objet": "Proj 95-O5",
+    "etat_batiment": 4,
+    "nom": "Bâtiment O5 + cabine HT C3",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-079",
+    "code_objet": "Proj 95-O6",
+    "etat_batiment": 1,
+    "nom": "Bâtiment O6",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-080",
+    "code_objet": "Proj 95-O7",
+    "etat_batiment": 2,
+    "nom": "Bâtiment O7 - cabine HT C5",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-081",
+    "code_objet": "Proj 95-O8",
+    "etat_batiment": 6,
+    "nom": "Bâtiment O8 - cabine HT",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-082",
+    "code_objet": "Proj 95-P1",
+    "etat_batiment": 3,
+    "nom": "Bâtiment P1",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-083",
+    "code_objet": "Proj 95-PD1",
+    "etat_batiment": 3,
+    "nom": "Bâtiment PD1",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-084",
+    "code_objet": "Proj 95-ST1",
+    "etat_batiment": 5,
+    "nom": "Bâtiment ST1",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-085",
+    "code_objet": "Proj 95-ST2",
+    "etat_batiment": 2,
+    "nom": "Bâtiment ST2",
+    "lieu": "Amay"
+  },
+  {
+    "id_batiment": "BAT-086",
+    "code_objet": "Proj 95-WAR",
+    "etat_batiment": 2,
+    "nom": "Bâtiment Wardam",
+    "lieu": "Amay"
+  }
+]
